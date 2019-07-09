@@ -1,0 +1,72 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+    - master
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build
+  branches:
+    include:
+    - master
+
+jobs:
+- job: 'RunLibraryTests'
+  pool:
+    vmImage: 'ubuntu-16.04'
+  container: 'python:3.7.4-buster'
+  steps:
+  - script: |
+      export PATH=$PATH:$HOME/.local/bin:$HOME/bin
+      pip install --upgrade pip
+      pip install --user pytest pytest-azurepipelines
+      pip install --user -r requirements-dev.txt
+    displayName: 'Install dependencies'
+  - script: |
+      python setup.py sdist bdist_wheel
+      pip install --user --no-cache-dir .
+      rm -rf dwdbulk/
+    displayName: 'Build package'
+
+  - script: |
+        python -m pytest tests/
+    displayName: 'Run tests'
+
+- job: "CheckLinting"
+  pool:
+    vmImage: 'ubuntu-16.04'
+  container: 'python:3.7.4-buster'
+  steps:
+  - script: |
+      pip install --user --upgrade pip
+      pip install --user pytest pytest-azurepipelines
+      pip install --user black
+    displayName: 'Install dependencies'
+  - script: |
+      export PATH=$PATH:$HOME/.local/bin:$HOME/bin
+      black . --check
+    displayName: 'Run black linter check'
+
+
+- job: "UploadFile"
+  pool:
+    vmImage: 'ubuntu-16.04'
+  # container: 'python:3.7.4-buster'
+  steps:
+  - script: |
+      #Source: https://www.thomasmaurer.ch/2019/05/how-to-install-azcopy-for-azure-storage/
+      #Download AzCopy
+      wget https://aka.ms/downloadazcopy-v1-linux
+
+      #Expand Archive
+      tar -xvf downloadazcopy-v10-linux
+
+      #Move AzCopy to the destination you want to store it
+      sudo cp ./azcopy_linux_amd64_*/azcopy /usr/bin/
+
+      azcopy login --identity dwdbulk-pipeline-blob-connection
+      azcopy copy "CHANGES.md" "https://mystorageaccount.blob.core.windows.net/dwdweather/test/CHANGES.md"
+    displayName: 'Upload random file'

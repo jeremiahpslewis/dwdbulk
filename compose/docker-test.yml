@@ -1,0 +1,5 @@
+version: '3.7'
+services:
+    test_runner:
+        build: .
+        command: python -m pytest tests/

@@ -1,0 +1,17 @@
+- Add badges to readme
+- Move to cloud (Azure?)
+- https://pypi.org/project/azure-storage-blob/
+- Process data files -> parquet with partitioning
+    - Add to prefect flow
+- Put together exploratory visualizations
+    - Blog post about sleeping weather
+    - Blog post about heat & duration
+    - Blog post about cloudiness (overall vs daytime)
+
+
+- Add Metadata import..
+- Change "height" field to "elevation"
+- Identify and correct timezones! (Starting in 2000 UTC, up til 1999 in CET);
+    - For correct parsing, metadata Needs to be extracted
+
+- Add file check step for parquet files; delete corrupted files...

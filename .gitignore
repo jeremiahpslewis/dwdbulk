@@ -3,11 +3,25 @@ __pycache__/
 .mypy_cache/
 .vscode/
 .pytest_cache/
-
+.ipynb_checkpoints/
 *.py[cod]
-
+*.zip
+*.parquet
+*.dirlock
+*.lock
+errors.txt
+*-checkpoint.ipynb
+*.json
 # C extensions
 *.so
+*-checkpoint.ipynb
+*_secret
+*.html
+.jupyter/
+*-workspace
+*.db
+*.sqlite
+*.kml
 
 # Distribution / packaging
 .Python
