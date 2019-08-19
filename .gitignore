@@ -18,6 +18,7 @@ errors.txt
 *_secret
 *.html
 .jupyter/
+*.kmz
 *-workspace
 *.db
 *.sqlite
