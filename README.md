@@ -14,7 +14,9 @@ Germany.
 ## Usage as library
 
 ```python
-import os
+
+...
+...
 
 ```
 

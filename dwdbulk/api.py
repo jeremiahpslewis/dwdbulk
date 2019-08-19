@@ -27,12 +27,12 @@ na_values = ["-999", "-999   "]
 # - resolution -> measurement -> time bucket -> station availability
 
 
-def __gather_resource_files(resolution, category):
+def __gather_resource_files(resolution, parameter):
     """
-    Given time resolution and measurement category, return list of available resources (observations and metadata).
+    Given time resolution and measurement parameter, return list of available resources (observations and metadata).
     """
 
-    index_uri = germany_climate_uri / resolution / category
+    index_uri = germany_climate_uri / resolution / parameter
 
     resource_list = get_resource_index(index_uri)
 
@@ -63,22 +63,22 @@ def get_resolutions() -> List[str]:
     return get_resource_index(germany_climate_uri, "", full_uri=False)
 
 
-def get_measurement_categories(resolution: str) -> List[str]:
+def get_measurement_parameters(resolution: str) -> List[str]:
     return [
-        {"resolution": resolution, "category": cat}
-        for cat in get_resource_index(
+        {"resolution": resolution, "parameter": parameter}
+        for parameter in get_resource_index(
             germany_climate_uri / resolution, "", full_uri=False
         )
     ]
 
 
-def get_stations(resolution: str, category: str) -> pd.DataFrame:
+def get_stations(resolution: str, parameter: str) -> pd.DataFrame:
     """
     Load station meta data from DWD server.
     """
     log.info("Loading station data from CDC")
 
-    resource_list = __gather_resource_files(resolution, category)
+    resource_list = __gather_resource_files(resolution, parameter)
     # Get directory contents.
     resource_list = [x for x in resource_list if "Beschreibung_Stationen.txt" in str(x)]
 
@@ -133,8 +133,8 @@ def get_stations_list_from_uri(uri: str):
     return df
 
 
-def get_measurement_data_uris(resolution, category):
-    available_resources = __gather_resource_files(resolution, category)
+def get_measurement_data_uris(resolution, parameter):
+    available_resources = __gather_resource_files(resolution, parameter)
 
     # Filter by File Format
     # NOTE: We assume that all files that pass this filter are data files
@@ -152,7 +152,7 @@ def generate_partitioned_dataset(dataset_folder):
     df["date_start__month"] = df.date_start.dt.month
     df["date_start__year_month"] = df["date_start__year"] + df["date_start__month"]
     df["resolution"] = path.stem.split("__")[0]
-    df["category"] = path.stem.split("__")[1]
+    df["parameter"] = path.stem.split("__")[1]
 
     unique_partitions = df.date_start__year_month.unique().compute()
 

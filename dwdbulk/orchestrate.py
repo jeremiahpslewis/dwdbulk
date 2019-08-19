@@ -18,23 +18,23 @@ def fetch_resolutions():
 
 
 @task
-def fetch_measurement_categories(resolution):
-    return api.get_measurement_categories(resolution)
+def fetch_measurement_parameters(resolution):
+    return api.get_measurement_parameters(resolution)
 
 
 @task(max_retries=3, retry_delay=datetime.timedelta(minutes=10))
-def fetch_stations(res_cat_obj):
-    resolution = res_cat_obj["resolution"]
-    category = res_cat_obj["category"]
+def fetch_stations(res_param_obj):
+    resolution = res_param_obj["resolution"]
+    parameter = res_param_obj["parameter"]
 
     folder_name = "stations"
     full_folder_name = f"data/{folder_name}"
-    file_name = f"{full_folder_name}/{category}.parquet"
+    file_name = f"{full_folder_name}/{parameter}.parquet"
 
     if not os.path.exists(full_folder_name):
         os.makedirs(full_folder_name)
 
-    stations_df = api.get_stations(resolution, category)
+    stations_df = api.get_stations(resolution, parameter)
     stations_pa = pa.Table.from_pandas(stations_df, preserve_index=False)
 
     pq.write_table(stations_pa, file_name)
@@ -43,13 +43,13 @@ def fetch_stations(res_cat_obj):
 
 
 @task
-def fetch_measurement_data_locations(res_cat_obj):
-    resolution = res_cat_obj["resolution"]
-    category = res_cat_obj["category"]
+def fetch_measurement_data_locations(res_param_obj):
+    resolution = res_param_obj["resolution"]
+    parameter = res_param_obj["parameter"]
 
-    uris = api.get_measurement_data_uris(resolution, category)
+    uris = api.get_measurement_data_uris(resolution, parameter)
     return [
-        {"uri": uri, "resolution": resolution, "category": category} for uri in uris
+        {"uri": uri, "resolution": resolution, "parameter": parameter} for uri in uris
     ]
 
 
@@ -61,10 +61,10 @@ def unlist(list_object):
 @task(max_retries=3, retry_delay=datetime.timedelta(minutes=10))
 def fetch_measurement_data(measurement_spec):
     resolution = measurement_spec["resolution"]
-    category = measurement_spec["category"]
+    parameter = measurement_spec["parameter"]
     uri = measurement_spec["uri"]
 
-    folder_name = f"{resolution}__{category}"
+    folder_name = f"{resolution}__{parameter}"
     full_folder_name = f"data/measurements/{folder_name}"
     if not os.path.exists(full_folder_name):
         os.makedirs(full_folder_name)
@@ -102,19 +102,19 @@ with Flow("Fetch Full DWD Germany Data") as full_flow:
     # Fetch available resolutions
     # res_list = ["10_minutes"]
 
-    # Fetch resolution-measurement category objects per resolution
-    # measurement_categories_per_res = fetch_measurement_categories.map(res_list)
-    measurement_categories_per_res = [
-        [{"resolution": "10_minutes", "category": "air_temperature"}]
+    # Fetch resolution-measurement parameter objects per resolution
+    # measurement_parameters_per_res = fetch_measurement_parameters.map(res_list)
+    measurement_parameters_per_res = [
+        [{"resolution": "10_minutes", "parameter": "air_temperature"}]
     ]
 
     # Collapse list of lists to single list
-    res_cat_list = unlist(measurement_categories_per_res)
+    res_param_list = unlist(measurement_parameters_per_res)
 
     # Fetch and save station data, return list of stations for each res / cat combination
-    station_list = fetch_stations.map(res_cat_list)
+    station_list = fetch_stations.map(res_param_list)
 
-    data_file_uris = fetch_measurement_data_locations.map(res_cat_list)
+    data_file_uris = fetch_measurement_data_locations.map(res_param_list)
     data_file_uri_list = unlist(data_file_uris)
 
     # Fetch data

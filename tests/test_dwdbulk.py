@@ -5,7 +5,7 @@ import pytest
 import requests
 from dwdbulk.api import (
     __gather_resource_files,
-    get_measurement_categories,
+    get_measurement_parameters,
     get_measurement_data_from_uri,
     get_measurement_data_uris,
     get_resolutions,
@@ -20,7 +20,7 @@ from dwdbulk.util import (
     station_metadata,
 )
 
-measurement_categories_10_minutes = [
+measurement_parameters_10_minutes = [
     "air_temperature",
     "extreme_temperature",
     "extreme_wind",
@@ -29,7 +29,7 @@ measurement_categories_10_minutes = [
     "wind",
 ]
 
-measurement_categories_hourly = [
+measurement_parameters_hourly = [
     "air_temperature",
     "cloud_type",
     "cloudiness",
@@ -44,7 +44,7 @@ measurement_categories_hourly = [
     "wind_synop",
 ]
 
-measurement_categories_daily = [
+measurement_parameters_daily = [
     "kl",
     "more_precip",
     "soil_temperature",
@@ -53,15 +53,15 @@ measurement_categories_daily = [
     "weather_phenomena",
 ]
 
-# TODO: Fill in measurement categories for other resolutions
+# TODO: Fill in measurement parameters for other resolutions
 
 resolution_and_measurement_standards = {
-    "10_minutes": measurement_categories_10_minutes,
+    "10_minutes": measurement_parameters_10_minutes,
     "1_minute": ["precipitation"],
     # TODO: Below data series have different format (zipped raw & metadata); need to adapt parser
     # "annual": ["more_precip", "weather_phenomena", "kl"],
-    # "daily": measurement_categories_daily,
-    # "hourly": measurement_categories_hourly,
+    # "daily": measurement_parameters_daily,
+    # "hourly": measurement_parameters_hourly,
     # "monthly": ["more_precip", "weather_phenomena", "kl"],
     # "multi_annual": [],
     # "subdaily": [],
@@ -99,11 +99,11 @@ def test_get_resource_index():
 
 
 @pytest.mark.parametrize(
-    "resolution,category",
+    "resolution,parameter",
     [(k, v_i) for k, v in resolution_and_measurement_standards.items() for v_i in v],
 )
-def test_gather_resource_files_helper(resolution, category):
-    files = __gather_resource_files(resolution, category)
+def test_gather_resource_files_helper(resolution, parameter):
+    files = __gather_resource_files(resolution, parameter)
     assert len([x for x in files if "Beschreibung_Stationen.txt" in str(x)]) > 0
 
 
@@ -129,38 +129,38 @@ def test_get_all_resolutions():
 
 
 @pytest.mark.parametrize(
-    "resolution,expected_measurement_categories",
+    "resolution,expected_measurement_parameters",
     [(k, v) for k, v in resolution_and_measurement_standards.items()],
 )
-def test_get_measurement_categories(resolution, expected_measurement_categories):
-    # If measurement categories not currently specified, then skip test.
-    if expected_measurement_categories == []:
+def test_get_measurement_parameters(resolution, expected_measurement_parameters):
+    # If measurement parameters not currently specified, then skip test.
+    if expected_measurement_parameters == []:
         return
 
-    expected_measurement_categories = [
-        {"resolution": resolution, "category": i}
-        for i in expected_measurement_categories
+    expected_measurement_parameters = [
+        {"resolution": resolution, "parameter": i}
+        for i in expected_measurement_parameters
     ]
-    extracted_measurement_categories = get_measurement_categories(resolution)
+    extracted_measurement_parameters = get_measurement_parameters(resolution)
 
-    for i in extracted_measurement_categories:
-        assert i in extracted_measurement_categories
+    for i in extracted_measurement_parameters:
+        assert i in extracted_measurement_parameters
 
-    for j in extracted_measurement_categories:
-        assert j in extracted_measurement_categories
+    for j in extracted_measurement_parameters:
+        assert j in extracted_measurement_parameters
 
 
 @pytest.mark.parametrize(
-    "resolution,category",
+    "resolution,parameter",
     [(k, v_i) for k, v in resolution_and_measurement_standards.items() for v_i in v],
 )
-def test_get_stations(resolution, category):
-    "Test fetching station data. Test randomly chooses a measurement category for each of the three supported time frames."
-    # If measurement categories not currently specified, then skip test.
-    if category == []:
+def test_get_stations(resolution, parameter):
+    "Test fetching station data. Test randomly chooses a measurement parameter for each of the three supported time frames."
+    # If measurement parameters not currently specified, then skip test.
+    if parameter == []:
         return
 
-    df = get_stations(resolution, category)
+    df = get_stations(resolution, parameter)
 
     assert df.date_start.min() > pd.Timestamp("1700-01-01", tz="UTC")
     assert df.date_start.max() < pd.Timestamp("2200-01-01", tz="UTC")
@@ -206,11 +206,11 @@ def test_https_helper():
 
 
 @pytest.mark.parametrize(
-    "resolution,category",
+    "resolution,parameter",
     [(k, v_i) for k, v in resolution_and_measurement_standards.items() for v_i in v],
 )
-def test_get_measurement_data_uris_and_data(resolution, category):
-    files = get_measurement_data_uris(resolution, category)
+def test_get_measurement_data_uris_and_data(resolution, parameter):
+    files = get_measurement_data_uris(resolution, parameter)
     assert len(files) > 0
 
     files_sample = random.sample(files, 2)
