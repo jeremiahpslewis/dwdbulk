@@ -12,7 +12,9 @@ from lxml import etree
 
 
 def fetch_weather_forecast(url, xml_directory_path="xml_zip"):
-
+    """
+    Fetch weather forecast file (zipped xml) and extract xml into folder specified by xml_directory_path.
+    """
     if not os.path.exists(xml_directory_path):
         os.makedirs(xml_directory_path)
 
@@ -31,7 +33,9 @@ def fetch_weather_forecast(url, xml_directory_path="xml_zip"):
 
 
 def convert_xml_to_parquet(path, station_ids: List = None):
-    """Convert DWD XML Weather Forecast File of Type MOSMIX_S to parquet files."""
+    """
+    Convert DWD XML Weather Forecast File of Type MOSMIX_S to parquet files.
+    """
 
     tree = etree.parse(path)
     root = tree.getroot()
@@ -69,26 +73,27 @@ def convert_xml_to_parquet(path, station_ids: List = None):
     for station_forecast in forecast_items:
         station_id = station_forecast.find("kml:name", root.nsmap).text
 
-        measurement_list = station_forecast.findall(
-            "kml:ExtendedData/dwd:Forecast", root.nsmap
-        )
-        df = pd.DataFrame({"date_start": timesteps})
-
-        for measurement_item in measurement_list:
-
-            measurement_parameter = measurement_item.get(
-                f"{{{root.nsmap['dwd']}}}elementName"
+        if station_id in station_ids:
+            measurement_list = station_forecast.findall(
+                "kml:ExtendedData/dwd:Forecast", root.nsmap
             )
-            measurement_string = measurement_item.getchildren()[0].text
-            measurement_values = " ".join(measurement_string.split()).split(" ")
+            df = pd.DataFrame({"date_start": timesteps})
 
-            assert len(measurement_values) == len(
-                timesteps
-            ), "Number of timesteps does not match number of measurement values."
-            df[measurement_parameter] = measurement_values
+            for measurement_item in measurement_list:
 
-        df["station_id"] = station_id
-        for k, v in metadata.items():
-            df[k] = v
-        df.replace("-", np.nan, inplace=True)
-        return df
+                measurement_parameter = measurement_item.get(
+                    f"{{{root.nsmap['dwd']}}}elementName"
+                )
+                measurement_string = measurement_item.getchildren()[0].text
+                measurement_values = " ".join(measurement_string.split()).split(" ")
+
+                assert len(measurement_values) == len(
+                    timesteps
+                ), "Number of timesteps does not match number of measurement values."
+                df[measurement_parameter] = measurement_values
+
+            df["station_id"] = station_id
+            for k, v in metadata.items():
+                df[k] = v
+            df.replace("-", np.nan, inplace=True)
+            return df

@@ -26,7 +26,7 @@ REQUIRED = [
     "pandas>=0.25,<0.26",
     "prefect>=0.6,<0.7",
     "pyarrow>=0.14.1,<0.15",
-    "lxml",
+    "lxml>=4.4,<4.5",
 ]
 
 # What packages are optional?
