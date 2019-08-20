@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 from typing import List
+from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import numpy as np
@@ -19,7 +20,7 @@ def fetch_raw_forecast_xml(url, xml_directory_path="forecast_xml"):
         os.makedirs(xml_directory_path)
 
     r = requests.get(url, stream=True)
-    file_name = "__".join(url.split(".de/", 1)[1].split("/"))
+    file_name = urlparse(url).path.replace("/", "__")
 
     if r.status_code == 200:
         with tempfile.TemporaryDirectory() as tmpdirname:

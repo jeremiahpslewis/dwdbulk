@@ -79,7 +79,7 @@ def parse_htmllist(baseurl, content, extension=None, full_uri=True):
         paths = [path for path in paths if extension in path]
 
     if full_uri:
-        return [Path(baseurl) / path for path in paths]
+        return [urljoin(baseurl, path) for path in paths]
     else:
         return [path.rstrip("/") for path in paths]
 
