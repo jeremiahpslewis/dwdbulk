@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 from prefect import Flow, task
 from prefect.engine.cache_validators import all_inputs
 from prefect.engine.executors import DaskExecutor
-from prefect.utitiles.tasks import unmapped
+from prefect.utilities.tasks import unmapped
 
 from dwdbulk import api
 from dwdbulk.api.forecasts import convert_xml_to_parquet
@@ -140,13 +140,13 @@ def process_forecast(forecast_url, station_ids):
     os.remove(forecast_file_path)
 
 
-with Flow("Fetch DWD Germany Forecast Data") as full_flow:
+with Flow("Fetch DWD Germany Forecast Data") as forecasts_flow:
     bb_stations = get_berlin_brandenburg_station_ids()
     forecast_uris = gather_forecast_uris()
     process_forecast(forecast_uris, unmapped(bb_stations))
 
 
-with Flow("Fetch Full DWD Germany Data") as full_flow:
+with Flow("Fetch Full DWD Germany Observation Data") as observations_flow:
     # Fetch available resolutions
     # res_list = ["10_minutes"]
 
@@ -170,6 +170,6 @@ with Flow("Fetch Full DWD Germany Data") as full_flow:
 
 if __name__ == "__main__":
 
-    # executor = DaskExecutor(local_processes=True)
-    # full_flow.run(executor=executor)
-    partition_flow.run()
+    executor = DaskExecutor(local_processes=True)
+    forecasts_flow.run(executor=executor)
+    # observations_flow.run(executor=executor)

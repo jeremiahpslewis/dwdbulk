@@ -1,11 +1,4 @@
-- Add filter to forecast import (by station & parameter)
-- Setup parquet files (with partitioning for forecast import)
 - Add tests to forecast import
-- Add forecast import to orchestrate.py
-- Ensure file cleanup (erase directories)
-
-- Update orchestrate.py so that only berlin (and brandenburg?) data is imported
-- Fix parquet files so that partitioning happens on initial file write (remove second partitioning step)
 
 - Setup ongoing data collection via Azure pipelines (hourly?)
 
