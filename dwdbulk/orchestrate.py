@@ -13,7 +13,7 @@ from prefect.engine.cache_validators import all_inputs
 from prefect.engine.executors import DaskExecutor
 from prefect.utilities.tasks import unmapped
 
-from dwdbulk import api
+import dwdbulk.api as api
 from dwdbulk.api.forecasts import convert_xml_to_parquet
 from dwdbulk.util import get_resource_index, partitioned_df_write_to_parquet
 
@@ -119,7 +119,7 @@ def gather_forecast_uris():
 )
 def get_berlin_brandenburg_station_ids():
     """Identify active Berlin / Brandenburg weather stations."""
-    df = observations.get_stations("hourly", "air_temperature")
+    df = api.observations.get_stations("hourly", "air_temperature")
     df = df.loc[
         (df.state.isin(["Berlin", "Brandenburg"]))
         & (df.date_end > pd.Timestamp("2019-01-01", tz="UTC"))
