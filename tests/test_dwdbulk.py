@@ -3,7 +3,7 @@ import random
 import pandas as pd
 import pytest
 import requests
-from dwdbulk.api import (
+from dwdbulk.api.observations import (
     __gather_resource_files,
     get_measurement_parameters,
     get_measurement_data_from_uri,

@@ -14,12 +14,12 @@ from prefect.engine.executors import DaskExecutor
 
 @task
 def fetch_resolutions():
-    return api.get_resolutions()
+    return api.observations.get_resolutions()
 
 
 @task
 def fetch_measurement_parameters(resolution):
-    return api.get_measurement_parameters(resolution)
+    return api.observations.get_measurement_parameters(resolution)
 
 
 @task(max_retries=3, retry_delay=datetime.timedelta(minutes=10))
@@ -34,7 +34,7 @@ def fetch_stations(res_param_obj):
     if not os.path.exists(full_folder_name):
         os.makedirs(full_folder_name)
 
-    stations_df = api.get_stations(resolution, parameter)
+    stations_df = api.observations.get_stations(resolution, parameter)
     stations_pa = pa.Table.from_pandas(stations_df, preserve_index=False)
 
     pq.write_table(stations_pa, file_name)
@@ -47,7 +47,7 @@ def fetch_measurement_data_locations(res_param_obj):
     resolution = res_param_obj["resolution"]
     parameter = res_param_obj["parameter"]
 
-    uris = api.get_measurement_data_uris(resolution, parameter)
+    uris = api.observations.get_measurement_data_uris(resolution, parameter)
     return [
         {"uri": uri, "resolution": resolution, "parameter": parameter} for uri in uris
     ]
@@ -79,7 +79,7 @@ def fetch_measurement_data(measurement_spec):
         if os.path.exists(full_file_path):
             return
 
-        df = api.get_measurement_data_from_uri(uri)
+        df = api.observations.get_measurement_data_from_uri(uri)
 
         df["date_start__year"] = df.date_start.dt.year
 
@@ -95,7 +95,7 @@ def fetch_measurement_data(measurement_spec):
 
 @task
 def run_partition_dataset(dataset_folder):
-    api.generate_partitioned_dataset(dataset_folder)
+    api.observations.generate_partitioned_dataset(dataset_folder)
 
 
 with Flow("Fetch Full DWD Germany Data") as full_flow:
