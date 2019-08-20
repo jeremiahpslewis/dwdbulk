@@ -1,7 +1,5 @@
 FROM jupyter/datascience-notebook
 
-WORKDIR /app
-
 COPY requirements-dev.txt /tmp/
 
 RUN pip install --upgrade pip setuptools wheel \
@@ -9,17 +7,17 @@ RUN pip install --upgrade pip setuptools wheel \
     && fix-permissions $CONDA_DIR \
     && fix-permissions /home/$NB_USER
 
-COPY . /app
+
+
+COPY . /home/$NB_USER
 
 USER root
 
 RUN python setup.py sdist bdist_wheel \
-    && pip install . \
+    && pip install /home/$NB_USER \
     # Uninstall dwdbulk so that there are no namespace conflicts with source files.
-    && pip uninstall -y dwdbulk
-
-
-RUN fix-permissions $CONDA_DIR \
+    && pip uninstall -y dwdbulk \
+    && fix-permissions $CONDA_DIR \
     && fix-permissions /home/$NB_USER
 
 USER $NB_UID

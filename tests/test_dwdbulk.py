@@ -1,13 +1,13 @@
 import random
+from urllib.parse import urljoin
 
 import pandas as pd
-import pytest
 import requests
 from dwdbulk.api.observations import (
     __gather_resource_files,
-    get_measurement_parameters,
     get_measurement_data_from_uri,
     get_measurement_data_uris,
+    get_measurement_parameters,
     get_resolutions,
     get_stations,
     get_stations_list_from_uri,
@@ -15,10 +15,11 @@ from dwdbulk.api.observations import (
 from dwdbulk.util import (
     germany_climate_uri,
     get_resource_index,
-    https,
     parse_htmllist,
     station_metadata,
 )
+
+import pytest
 
 measurement_parameters_10_minutes = [
     "air_temperature",
@@ -73,27 +74,26 @@ resolution_and_measurement_standards = {
     [k for k, v in resolution_and_measurement_standards.items() if v != []],
 )
 def test_parse_htmllist(resolution):
-    url = f"opendata.dwd.de/climate_environment/CDC/observations_germany/climate/{resolution}"
-    r = requests.get(https(url))
-    link_list = parse_htmllist(url, r.text)
-
-    extracted_links = [str(link) for link in link_list]
+    url = urljoin(
+        "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/",
+        resolution,
+    )
+    r = requests.get(url)
+    extracted_links = parse_htmllist(url, r.text)
 
     expected_links = resolution_and_measurement_standards[resolution]
     expected_links = [
-        str(germany_climate_uri / resolution / link) for link in expected_links
+        urljoin(germany_climate_uri, resolution, link) for link in expected_links
     ]
     assert sorted(extracted_links) == sorted(expected_links)
 
 
 def test_get_resource_index():
-    url = germany_climate_uri / "10_minutes/"
-    link_list = get_resource_index(url, "/")
-
-    extracted_links = [str(link) for link in link_list]
+    url = urljoin(germany_climate_uri, "10_minutes/")
+    extracted_links = get_resource_index(url, "/")
 
     expected_links = resolution_and_measurement_standards["10_minutes"]
-    expected_links = [str(url / link) for link in expected_links]
+    expected_links = [urljoin(url, link) for link in expected_links]
 
     assert sorted(extracted_links) == sorted(expected_links)
 
@@ -104,7 +104,7 @@ def test_get_resource_index():
 )
 def test_gather_resource_files_helper(resolution, parameter):
     files = __gather_resource_files(resolution, parameter)
-    assert len([x for x in files if "Beschreibung_Stationen.txt" in str(x)]) > 0
+    assert len([x for x in files if "Beschreibung_Stationen.txt" in x]) > 0
 
 
 def test_get_resource_all():
@@ -113,10 +113,9 @@ def test_get_resource_all():
     """
 
     extracted_links = get_resource_index(germany_climate_uri)
-    extracted_links = [str(link) for link in extracted_links]
 
     expected_links = [
-        str(germany_climate_uri / link)
+        urljoin(germany_climate_uri, link)
         for link in resolution_and_measurement_standards.keys()
     ]
     assert set(expected_links).issubset(extracted_links)
@@ -195,14 +194,6 @@ def test_get_stations(resolution, parameter):
     expected_colnames = [v["name"] for k, v in station_metadata.items()]
     assert sorted(df.columns) == sorted(expected_colnames)
     assert df.shape[0] > 5
-
-
-def test_https_helper():
-    link = "https://google.com"
-    assert https(link) == link
-
-    link = "google.com"
-    assert https(link) == "https://" + link
 
 
 @pytest.mark.parametrize(

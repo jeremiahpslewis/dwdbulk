@@ -71,7 +71,7 @@ def fetch_measurement_data(measurement_spec):
 
     try:
         file_name = re.match(
-            r".*\/([^/]+_[a-z]+_[0-9]+_[^/]+).zip", str(uri), flags=re.IGNORECASE
+            r".*\/([^/]+_[a-z]+_[0-9]+_[^/]+).zip", uri, flags=re.IGNORECASE
         )
         file_name = file_name.group(1)
         full_file_path = f"{full_folder_name}/{file_name}.parquet"
@@ -89,7 +89,7 @@ def fetch_measurement_data(measurement_spec):
 
     except:
         with open("errors.txt", "a") as f:
-            f.write(str(uri) + "\n")
+            f.write(uri + "\n")
         raise
 
 

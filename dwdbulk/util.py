@@ -3,14 +3,14 @@ import logging
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urljoin, urlparse
 
 import requests
 
 log = logging.getLogger(__name__)
 
 # DWD CDC HTTP server.
-baseuri = Path("opendata.dwd.de/climate_environment/CDC")
-
+baseuri = "https://opendata.dwd.de/climate_environment/CDC"
 
 station_metadata = {
     "Stations_id": {"name": "station_id", "type": "int64"},
@@ -50,7 +50,7 @@ measurement_datetypes_kv = [
 
 
 # Observations in Germany.
-germany_climate_uri = baseuri / "observations_germany/climate"
+germany_climate_uri = urljoin(baseuri, "observations_germany/climate")
 
 
 def setup_logging(level=logging.INFO):
@@ -93,18 +93,8 @@ def get_resource_index(uri, extension="", full_uri=True):
     """
 
     log.info("Requesting %s", uri)
-    response = requests.get(https(uri))
+    response = requests.get(uri)
     if response.status_code != 200:
         raise ValueError(f"Fetching resource {uri} failed")
     resource_list = parse_htmllist(uri, response.text, extension, full_uri)
     return resource_list
-
-
-def https(uri):
-    """
-    Add https:// schema if not specified
-
-    :param str uri: Uri with or without schema
-    """
-    uri = str(uri)
-    return "https://" + uri if "http" != uri[0:4] else uri

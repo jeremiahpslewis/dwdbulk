@@ -3,6 +3,7 @@ import pathlib
 import re
 from pathlib import Path
 from typing import List
+from urllib.parse import urljoin
 
 import dask.dataframe as dd
 import pandas as pd
@@ -10,7 +11,6 @@ import requests
 from dwdbulk.util import (
     germany_climate_uri,
     get_resource_index,
-    https,
     measurement_colnames_kv,
     measurement_coltypes_kv,
     measurement_datetypes_kv,
@@ -32,7 +32,7 @@ def __gather_resource_files(resolution, parameter):
     Given time resolution and measurement parameter, return list of available resources (observations and metadata).
     """
 
-    index_uri = germany_climate_uri / resolution / parameter
+    index_uri = urljoin(germany_climate_uri, resolution, parameter)
 
     resource_list = get_resource_index(index_uri)
 
@@ -40,7 +40,7 @@ def __gather_resource_files(resolution, parameter):
     subfolder_resource_lists = [
         x
         for x in resource_list
-        if any([y in str(x) for y in ["now", "recent", "historical"]])
+        if any([y in x for y in ["now", "recent", "historical"]])
     ]
 
     for f in subfolder_resource_lists:
@@ -67,7 +67,7 @@ def get_measurement_parameters(resolution: str) -> List[str]:
     return [
         {"resolution": resolution, "parameter": parameter}
         for parameter in get_resource_index(
-            germany_climate_uri / resolution, "", full_uri=False
+            urljoin(germany_climate_uri, resolution), "", full_uri=False
         )
     ]
 
@@ -80,7 +80,7 @@ def get_stations(resolution: str, parameter: str) -> pd.DataFrame:
 
     resource_list = __gather_resource_files(resolution, parameter)
     # Get directory contents.
-    resource_list = [x for x in resource_list if "Beschreibung_Stationen.txt" in str(x)]
+    resource_list = [x for x in resource_list if "Beschreibung_Stationen.txt" in x]
 
     resource_df_list = []
 
@@ -97,7 +97,7 @@ def get_stations(resolution: str, parameter: str) -> pd.DataFrame:
 
 def get_measurement_data_from_uri(uri: str):
     df = pd.read_csv(
-        https(uri),
+        uri,
         sep=";",
         dtype=measurement_coltypes_kv,
         encoding="utf-8",
@@ -113,8 +113,6 @@ def get_measurement_data_from_uri(uri: str):
 
 
 def get_stations_list_from_uri(uri: str):
-    uri = https(uri)
-
     col_names = pd.read_csv(uri, sep=" ", encoding="latin1", nrows=0).columns.tolist()
 
     df = pd.read_fwf(
@@ -138,7 +136,7 @@ def get_measurement_data_uris(resolution, parameter):
 
     # Filter by File Format
     # NOTE: We assume that all files that pass this filter are data files
-    download_list = [f for f in available_resources if ".zip" in str(f)]
+    download_list = [f for f in available_resources if ".zip" in f]
 
     return download_list
 
