@@ -5,11 +5,17 @@ import re
 from glob import glob
 
 import dask.dataframe as dd
+import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from dwdbulk import api
 from prefect import Flow, task
+from prefect.engine.cache_validators import all_inputs
 from prefect.engine.executors import DaskExecutor
+from prefect.utitiles.tasks import unmapped
+
+from dwdbulk import api
+from dwdbulk.api.forecasts import convert_xml_to_parquet
+from dwdbulk.utils import get_resource_index, partitioned_df_write_to_parquet
 
 
 @task
@@ -22,7 +28,11 @@ def fetch_measurement_parameters(resolution):
     return api.observations.get_measurement_parameters(resolution)
 
 
-@task(max_retries=3, retry_delay=datetime.timedelta(minutes=10))
+@task(
+    max_retries=3,
+    retry_delay=datetime.timedelta(minutes=10),
+    cache_for=datetime.timedelta(hours=5),
+)
 def fetch_stations(res_param_obj):
     resolution = res_param_obj["resolution"]
     parameter = res_param_obj["parameter"]
@@ -35,9 +45,7 @@ def fetch_stations(res_param_obj):
         os.makedirs(full_folder_name)
 
     stations_df = api.observations.get_stations(resolution, parameter)
-    stations_pa = pa.Table.from_pandas(stations_df, preserve_index=False)
-
-    pq.write_table(stations_pa, file_name)
+    partitioned_df_write_to_parquet(stations_df, data_folder=full_folder_name)
 
     return stations_df["station_id"].tolist()
 
@@ -58,14 +66,19 @@ def unlist(list_object):
     return [i for l in list_object for i in l]
 
 
-@task(max_retries=3, retry_delay=datetime.timedelta(minutes=10))
+@task(
+    max_retries=3,
+    retry_delay=datetime.timedelta(minutes=10),
+    cache_for=datetime.timedelta(days=3),
+    cache_validator=all_inputs,
+)
 def fetch_measurement_data(measurement_spec):
     resolution = measurement_spec["resolution"]
     parameter = measurement_spec["parameter"]
     uri = measurement_spec["uri"]
 
-    folder_name = f"{resolution}__{parameter}"
-    full_folder_name = f"data/measurements/{folder_name}"
+    full_folder_name = f"data/{resolution}/{parameter}"
+
     if not os.path.exists(full_folder_name):
         os.makedirs(full_folder_name)
 
@@ -81,11 +94,7 @@ def fetch_measurement_data(measurement_spec):
 
         df = api.observations.get_measurement_data_from_uri(uri)
 
-        df["date_start__year"] = df.date_start.dt.year
-
-        df_pa = pa.Table.from_pandas(df, preserve_index=False)
-
-        pq.write_table(df_pa, full_file_path)
+        partitioned_df_write_to_parquet(df, data_folder=full_folder_name)
 
     except:
         with open("errors.txt", "a") as f:
@@ -93,9 +102,48 @@ def fetch_measurement_data(measurement_spec):
         raise
 
 
-@task
-def run_partition_dataset(dataset_folder):
-    api.observations.generate_partitioned_dataset(dataset_folder)
+@task(max_retries=3, retry_delay=datetime.timedelta(minutes=10))
+def gather_forecast_uris():
+    """Identify all available forecast files."""
+    forecast_uris = get_resource_index(
+        "https://opendata.dwd.de/weather/local_forecasts/mos/MOSMIX_S/all_stations/kml/"
+    )
+    forecast_uris = [f for f in forecast_uris if "LATEST" not in f]
+    return forecast_uris
+
+
+@task(
+    max_retries=3,
+    retry_delay=datetime.timedelta(minutes=10),
+    cache_for=datetime.timedelta(days=3),
+)
+def get_berlin_brandenburg_station_ids():
+    """Identify active Berlin / Brandenburg weather stations."""
+    df = observations.get_stations("hourly", "air_temperature")
+    df = df.loc[
+        (df.state.isin(["Berlin", "Brandenburg"]))
+        & (df.date_end > pd.Timestamp("2019-01-01", tz="UTC"))
+    ]
+    return df.station_id.tolist()
+
+
+@task(
+    max_retries=3,
+    retry_delay=datetime.timedelta(minutes=10),
+    cache_for=datetime.timedelta(days=3),
+    cache_validator=all_inputs,
+)
+def process_forecast(forecast_url, station_ids):
+    """Process XML forecast, store output and remove xml file."""
+    forecast_file_path = api.forecasts.fetch_raw_forecast_xml(forecast_url)
+    df = api.forecasts.convert_xml_to_parquet(forecast_file_path, station_ids)
+    os.remove(forecast_file_path)
+
+
+with Flow("Fetch DWD Germany Forecast Data") as full_flow:
+    bb_stations = get_berlin_brandenburg_station_ids()
+    forecast_uris = gather_forecast_uris()
+    process_forecast(forecast_uris, unmapped(bb_stations))
 
 
 with Flow("Fetch Full DWD Germany Data") as full_flow:
@@ -105,7 +153,7 @@ with Flow("Fetch Full DWD Germany Data") as full_flow:
     # Fetch resolution-measurement parameter objects per resolution
     # measurement_parameters_per_res = fetch_measurement_parameters.map(res_list)
     measurement_parameters_per_res = [
-        [{"resolution": "10_minutes", "parameter": "air_temperature"}]
+        [{"resolution": "hourly", "parameter": "air_temperature"}]
     ]
 
     # Collapse list of lists to single list
@@ -119,11 +167,6 @@ with Flow("Fetch Full DWD Germany Data") as full_flow:
 
     # Fetch data
     fetch_measurement_data.map(data_file_uri_list)
-
-with Flow("Fetch Full DWD Germany Data") as partition_flow:
-    dataset_folders = glob("data/measurements/10_minutes__air_temperature/")
-
-    run_partition_dataset.map(dataset_folders)
 
 if __name__ == "__main__":
 

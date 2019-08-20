@@ -1,8 +1,11 @@
 import random
+from pathlib import Path
 from urllib.parse import urljoin
 
 import pandas as pd
 import requests
+
+import pytest
 from dwdbulk.api.observations import (
     __gather_resource_files,
     get_measurement_data_from_uri,
@@ -18,8 +21,6 @@ from dwdbulk.util import (
     parse_htmllist,
     station_metadata,
 )
-
-import pytest
 
 measurement_parameters_10_minutes = [
     "air_temperature",
@@ -83,7 +84,8 @@ def test_parse_htmllist(resolution):
 
     expected_links = resolution_and_measurement_standards[resolution]
     expected_links = [
-        urljoin(germany_climate_uri, resolution, link) for link in expected_links
+        urljoin(germany_climate_uri, str(Path(resolution) / link))
+        for link in expected_links
     ]
     assert sorted(extracted_links) == sorted(expected_links)
 

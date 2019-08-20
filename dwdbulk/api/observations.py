@@ -32,7 +32,7 @@ def __gather_resource_files(resolution, parameter):
     Given time resolution and measurement parameter, return list of available resources (observations and metadata).
     """
 
-    index_uri = urljoin(germany_climate_uri, resolution, parameter)
+    index_uri = urljoin(germany_climate_uri, str(Path(resolution) / parameter))
 
     resource_list = get_resource_index(index_uri)
 
@@ -139,25 +139,3 @@ def get_measurement_data_uris(resolution, parameter):
     download_list = [f for f in available_resources if ".zip" in f]
 
     return download_list
-
-
-def generate_partitioned_dataset(dataset_folder):
-    path = pathlib.PurePath(dataset_folder)
-
-    df = dd.read_parquet(dataset_folder)
-
-    df["date_start__year"] = df.date_start.dt.year
-    df["date_start__month"] = df.date_start.dt.month
-    df["date_start__year_month"] = df["date_start__year"] + df["date_start__month"]
-    df["resolution"] = path.stem.split("__")[0]
-    df["parameter"] = path.stem.split("__")[1]
-
-    unique_partitions = df.date_start__year_month.unique().compute()
-
-    for filter_partition in unique_partitions:
-        df_subset = df[(df.date_start__year_month == filter_partition)].compute()
-        df_subset.to_parquet(
-            f"data/partitioned_measurements/{path.stem}",
-            partition_cols=["date_start__year", "date_start__month"],
-            index=False,
-        )

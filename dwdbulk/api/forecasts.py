@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from pathlib import Path
 from typing import List
 from urllib.parse import urlparse
 from zipfile import ZipFile
@@ -9,6 +10,7 @@ import numpy as np
 import pandas as pd
 import requests
 
+from dwdbulk.util import partitioned_df_write_to_parquet
 from lxml import etree
 
 
@@ -31,14 +33,15 @@ def fetch_raw_forecast_xml(url, xml_directory_path="forecast_xml"):
             with ZipFile(tmpdirname + "/" + file_name, "r") as zipObj:
                 # Extract all the contents of zip file in current directory
                 zipObj.extractall(path=xml_directory_path)
+                return Path(xml_directory_path) / zipObj.namelist()[0]
 
 
-def convert_xml_to_parquet(path="forecast_xml", station_ids: List = None):
+def convert_xml_to_parquet(filepath, station_ids: List = None):
     """
     Convert DWD XML Weather Forecast File of Type MOSMIX_S to parquet files.
     """
 
-    tree = etree.parse(path)
+    tree = etree.parse(str(filepath))
     root = tree.getroot()
 
     prod_items = {
@@ -66,7 +69,7 @@ def convert_xml_to_parquet(path="forecast_xml", station_ids: List = None):
         "kml:Document/kml:ExtendedData/dwd:ProductDefinition/dwd:ForecastTimeSteps",
         root.nsmap,
     )[0]
-    timesteps = [i.text for i in timesteps.getchildren()]
+    timesteps = [pd.Timestamp(i.text) for i in timesteps.getchildren()]
 
     # Get Station Forecasts
     forecast_items = root.findall("kml:Document/kml:Placemark", root.nsmap)
@@ -74,7 +77,7 @@ def convert_xml_to_parquet(path="forecast_xml", station_ids: List = None):
     for station_forecast in forecast_items:
         station_id = station_forecast.find("kml:name", root.nsmap).text
 
-        if station_id in station_ids:
+        if (station_ids is None) or station_id in station_ids:
             measurement_list = station_forecast.findall(
                 "kml:ExtendedData/dwd:Forecast", root.nsmap
             )
@@ -87,6 +90,9 @@ def convert_xml_to_parquet(path="forecast_xml", station_ids: List = None):
                 )
                 measurement_string = measurement_item.getchildren()[0].text
                 measurement_values = " ".join(measurement_string.split()).split(" ")
+                measurement_values = [
+                    np.nan if i == "-" else float(i) for i in measurement_values
+                ]
 
                 assert len(measurement_values) == len(
                     timesteps
@@ -96,5 +102,3 @@ def convert_xml_to_parquet(path="forecast_xml", station_ids: List = None):
             df["station_id"] = station_id
             for k, v in metadata.items():
                 df[k] = v
-            df.replace("-", np.nan, inplace=True)
-            return df
