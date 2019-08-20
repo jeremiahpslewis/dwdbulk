@@ -11,7 +11,7 @@ import requests
 from lxml import etree
 
 
-def fetch_weather_forecast(url, xml_directory_path="xml_zip"):
+def fetch_raw_forecast_xml(url, xml_directory_path="forecast_xml"):
     """
     Fetch weather forecast file (zipped xml) and extract xml into folder specified by xml_directory_path.
     """
@@ -32,7 +32,7 @@ def fetch_weather_forecast(url, xml_directory_path="xml_zip"):
                 zipObj.extractall(path=xml_directory_path)
 
 
-def convert_xml_to_parquet(path, station_ids: List = None):
+def convert_xml_to_parquet(path="forecast_xml", station_ids: List = None):
     """
     Convert DWD XML Weather Forecast File of Type MOSMIX_S to parquet files.
     """

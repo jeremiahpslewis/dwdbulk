@@ -8,4 +8,7 @@ services:
         ports:
             - 8888:8888
         command: jupyter lab
-        image: jupyter/datascience-notebook
+        build: Docker
+        build:
+            context: .
+            dockerfile: Dockerfile-dev
