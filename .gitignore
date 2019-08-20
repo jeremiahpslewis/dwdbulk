@@ -1,5 +1,8 @@
 # Byte-compiled / optimized / DLL files
+.ipython/
 __pycache__/
+.config/
+.local/
 .mypy_cache/
 .vscode/
 .pytest_cache/
