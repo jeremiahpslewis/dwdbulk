@@ -1,3 +1,4 @@
+- Enable limiting forecast data to specific parameters!
 - Add tests to forecast import
 
 - Setup ongoing data collection via Azure pipelines (hourly?)

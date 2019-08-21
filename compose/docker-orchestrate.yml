@@ -3,7 +3,7 @@ services:
     datascience:
         build: .
         volumes:
-            - "./data:/home/jovyan/data"
+            - "./data:/app/data"
         ports:
             - 8888:8888
         command: python -m dwdbulk.orchestrate
