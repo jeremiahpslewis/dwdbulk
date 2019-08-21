@@ -17,7 +17,7 @@ from .api import forecasts, observations
 from .util import (
     get_resource_index,
     partitioned_df_write_to_parquet,
-    get_observations_forecasts_lookup,
+    get_stations_lookup,
 )
 
 
@@ -119,7 +119,7 @@ def gather_forecast_urls():
 def get_berlin_brandenburg_station_ids():
     """Identify active Berlin / Brandenburg weather stations."""
     # TODO: Replace with csv lookup util
-    df = get_observations_forecasts_lookup()
+    df = get_stations_lookup()
     return {
         "forecasts": df["forecasts_station_id"].tolist(),
         "observations": df["observations_station_id"].tolist(),
@@ -152,7 +152,7 @@ with Flow("Fetch Full DWD Germany Observation Data") as observations_flow:
     # Fetch resolution-measurement parameter objects per resolution
     # measurement_parameters_per_res = fetch_measurement_parameters.map(res_list)
     measurement_parameters_per_res = [
-        [{"resolution": "hourly", "parameter": "air_temperature"}]
+        [{"resolution": "10_minutes", "parameter": "air_temperature"}]
     ]
 
     # Collapse list of lists to single list
