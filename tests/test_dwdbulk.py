@@ -63,7 +63,7 @@ resolution_and_measurement_standards = {
     # TODO: Below data series have different format (zipped raw & metadata); need to adapt parser
     # "annual": ["more_precip", "weather_phenomena", "kl"],
     # "daily": measurement_parameters_daily,
-    # "hourly": measurement_parameters_hourly,
+    "hourly": measurement_parameters_hourly,
     # "monthly": ["more_precip", "weather_phenomena", "kl"],
     # "multi_annual": [],
     # "subdaily": [],
@@ -84,7 +84,7 @@ def test_parse_htmllist(resolution):
 
     expected_links = resolution_and_measurement_standards[resolution]
     expected_links = [
-        urljoin(germany_climate_url, str(Path(resolution) / link))
+        urljoin(germany_climate_url, str(Path(resolution) / link) + "/")
         for link in expected_links
     ]
     assert sorted(extracted_links) == sorted(expected_links)
@@ -95,7 +95,7 @@ def test_get_resource_index():
     extracted_links = get_resource_index(url, "/")
 
     expected_links = resolution_and_measurement_standards["10_minutes"]
-    expected_links = [urljoin(url, link) for link in expected_links]
+    expected_links = [urljoin(url, link + "/") for link in expected_links]
 
     assert sorted(extracted_links) == sorted(expected_links)
 
@@ -117,7 +117,7 @@ def test_get_resource_all():
     extracted_links = get_resource_index(germany_climate_url)
 
     expected_links = [
-        urljoin(germany_climate_url, link)
+        urljoin(germany_climate_url, link + "/")
         for link in resolution_and_measurement_standards.keys()
     ]
     assert set(expected_links).issubset(extracted_links)
