@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
@@ -104,6 +105,9 @@ def get_resource_index(url, extension="", full_url=True):
 
 def partitioned_df_write_to_parquet(df, data_folder="data/", use_date_partitions=True):
     """Write dataframe to parquet."""
+    if not os.path.exists(data_folder):
+        os.makedirs(data_folder)
+
     partition_cols = None
 
     if use_date_partitions:
