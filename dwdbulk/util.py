@@ -121,10 +121,9 @@ def partitioned_df_write_to_parquet(df, data_folder="data/", use_date_partitions
         df["date_start__month"] = df.date_start.dt.month
         df["date_start__day"] = df.date_start.dt.day
 
-    df["date_accessed"] = pd.Timestamp.today()
-    df[
-        "date_accessed__yyyymmdd"
-    ] = f"{df.date_accessed.dt.year}{df.date_accessed.dt.month}{df.date_accessed.dt.day}"
+    today_date = pd.Timestamp.today()
+    df["date_accessed"] = today_date
+    df["date_accessed__yyyymmdd"] = today_date.strftime("%Y-%m-%d")
 
     df.to_parquet(
         data_folder,
