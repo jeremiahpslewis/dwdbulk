@@ -51,22 +51,22 @@ jobs:
     displayName: 'Run black linter check'
 
 
-- job: "UploadFile"
-  pool:
-    vmImage: 'ubuntu-16.04'
-  # container: 'python:3.7.4-buster'
-  steps:
-  - script: |
-      #Source: https://www.thomasmaurer.ch/2019/05/how-to-install-azcopy-for-azure-storage/
-      #Download AzCopy
-      wget https://aka.ms/downloadazcopy-v1-linux
+# - job: "UploadFile"
+#   pool:
+#     vmImage: 'ubuntu-16.04'
+#   # container: 'python:3.7.4-buster'
+#   steps:
+#   - script: |
+#       #Source: https://www.thomasmaurer.ch/2019/05/how-to-install-azcopy-for-azure-storage/
+#       #Download AzCopy
+#       wget https://aka.ms/downloadazcopy-v1-linux
 
-      #Expand Archive
-      tar -xvf downloadazcopy-v10-linux
+#       #Expand Archive
+#       tar -xvf downloadazcopy-v10-linux
 
-      #Move AzCopy to the destination you want to store it
-      sudo cp ./azcopy_linux_amd64_*/azcopy /usr/bin/
+#       #Move AzCopy to the destination you want to store it
+#       sudo cp ./azcopy_linux_amd64_*/azcopy /usr/bin/
 
-      azcopy login --identity dwdbulk-pipeline-blob-connection
-      azcopy copy "CHANGES.md" "https://mystorageaccount.blob.core.windows.net/dwdweather/test/CHANGES.md"
-    displayName: 'Upload random file'
+#       azcopy login --identity dwdbulk-pipeline-blob-connection
+#       azcopy copy "CHANGES.md" "https://mystorageaccount.blob.core.windows.net/dwdweather/test/CHANGES.md"
+#     displayName: 'Upload random file'

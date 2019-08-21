@@ -63,7 +63,7 @@ resolution_and_measurement_standards = {
     # TODO: Below data series have different format (zipped raw & metadata); need to adapt parser
     # "annual": ["more_precip", "weather_phenomena", "kl"],
     # "daily": measurement_parameters_daily,
-    "hourly": measurement_parameters_hourly,
+    # "hourly": measurement_parameters_hourly,
     # "monthly": ["more_precip", "weather_phenomena", "kl"],
     # "multi_annual": [],
     # "subdaily": [],
