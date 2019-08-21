@@ -15,6 +15,7 @@
     - Blog post about heat & duration
     - Blog post about cloudiness (overall vs daytime)
 
+- Migrate resource url search to use link lists, not link crawling...
 
 - Add Metadata import..
 - Change "height" field to "elevation"

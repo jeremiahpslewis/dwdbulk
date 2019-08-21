@@ -135,8 +135,7 @@ def get_berlin_brandenburg_station_ids():
 def process_forecast(forecast_url, station_ids):
     """Process XML forecast, store output and remove xml file."""
     forecast_file_path = forecasts.fetch_raw_forecast_xml(forecast_url)
-    df = forecasts.convert_xml_to_parquet(forecast_file_path, station_ids)
-    partitioned_df_write_to_parquet(df)
+    forecasts.convert_xml_to_parquet(forecast_file_path, station_ids)
     os.remove(forecast_file_path)
 
 

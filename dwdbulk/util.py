@@ -108,15 +108,23 @@ def partitioned_df_write_to_parquet(df, data_folder="data/", use_date_partitions
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
 
-    partition_cols = None
+    partition_cols = ["date_accessed__yyyymmdd"]
 
     if use_date_partitions:
-        partition_cols = ["date_start__year", "date_start__month", "date_start__day"]
+        partition_cols = [
+            *partition_cols,
+            "date_start__year",
+            "date_start__month",
+            "date_start__day",
+        ]
         df["date_start__year"] = df.date_start.dt.year
         df["date_start__month"] = df.date_start.dt.month
         df["date_start__day"] = df.date_start.dt.day
 
     df["date_accessed"] = pd.Timestamp.today()
+    df[
+        "date_accessed__yyyymmdd"
+    ] = f"{df.date_accessed.dt.year}{df.date_accessed.dt.month}{df.date_accessed.dt.day}"
 
     df.to_parquet(
         data_folder,
