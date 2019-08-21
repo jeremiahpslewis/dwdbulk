@@ -14,11 +14,8 @@ from prefect.engine.executors import DaskExecutor
 from prefect.utilities.tasks import unmapped
 
 from .api import forecasts, observations
-from .util import (
-    get_resource_index,
-    partitioned_df_write_to_parquet,
-    get_stations_lookup,
-)
+from .util import (get_resource_index, get_stations_lookup,
+                   partitioned_df_write_to_parquet)
 
 
 @task
@@ -137,39 +134,3 @@ def process_forecast(forecast_url, station_ids):
     forecast_file_path = forecasts.fetch_raw_forecast_xml(forecast_url)
     forecasts.convert_xml_to_parquet(forecast_file_path, station_ids)
     os.remove(forecast_file_path)
-
-
-with Flow("Fetch DWD Germany Forecast Data") as forecasts_flow:
-    bb_stations = get_berlin_brandenburg_station_ids()["forecasts"]
-    forecast_urls = gather_forecast_urls()
-    process_forecast.map(forecast_urls, unmapped(bb_stations))
-
-
-with Flow("Fetch Full DWD Germany Observation Data") as observations_flow:
-    # Fetch available resolutions
-    # res_list = ["10_minutes"]
-
-    # Fetch resolution-measurement parameter objects per resolution
-    # measurement_parameters_per_res = fetch_measurement_parameters.map(res_list)
-    measurement_parameters_per_res = [
-        [{"resolution": "10_minutes", "parameter": "air_temperature"}]
-    ]
-
-    # Collapse list of lists to single list
-    res_param_list = unlist(measurement_parameters_per_res)
-
-    # Fetch and save station data, return list of stations for each res / cat combination
-    station_list = fetch_stations.map(res_param_list)
-
-    data_file_urls = fetch_measurement_data_locations.map(res_param_list)
-    data_file_url_list = unlist(data_file_urls)
-
-    # Fetch data
-    fetch_measurement_data.map(data_file_url_list)
-
-if __name__ == "__main__":
-
-    # executor = DaskExecutor(local_processes=True)
-    executor = None
-    forecasts_flow.run(executor=executor)
-    # observations_flow.run(executor=executor)
