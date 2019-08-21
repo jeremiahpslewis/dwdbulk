@@ -14,7 +14,11 @@ from prefect.engine.executors import DaskExecutor
 from prefect.utilities.tasks import unmapped
 
 from .api import forecasts, observations
-from .util import get_resource_index, partitioned_df_write_to_parquet
+from .util import (
+    get_resource_index,
+    partitioned_df_write_to_parquet,
+    get_observations_forecasts_lookup,
+)
 
 
 @task
@@ -111,19 +115,15 @@ def gather_forecast_uris():
     return forecast_uris
 
 
-@task(
-    max_retries=3,
-    retry_delay=datetime.timedelta(minutes=10),
-    cache_for=datetime.timedelta(days=3),
-)
+@task
 def get_berlin_brandenburg_station_ids():
     """Identify active Berlin / Brandenburg weather stations."""
-    df = observations.get_stations("hourly", "air_temperature")
-    df = df.loc[
-        (df.state.isin(["Berlin", "Brandenburg"]))
-        & (df.date_end > pd.Timestamp("2019-01-01", tz="UTC"))
-    ]
-    return df.station_id.tolist()
+    # TODO: Replace with csv lookup util
+    df = get_observations_forecasts_lookup()
+    return {
+        "forecasts": df["forecasts_station_id"].tolist(),
+        "observations": df["observations_station_id"].tolist(),
+    }
 
 
 @task(
@@ -136,13 +136,14 @@ def process_forecast(forecast_url, station_ids):
     """Process XML forecast, store output and remove xml file."""
     forecast_file_path = forecasts.fetch_raw_forecast_xml(forecast_url)
     df = forecasts.convert_xml_to_parquet(forecast_file_path, station_ids)
+    partitioned_df_write_to_parquet(df)
     os.remove(forecast_file_path)
 
 
 with Flow("Fetch DWD Germany Forecast Data") as forecasts_flow:
-    bb_stations = get_berlin_brandenburg_station_ids()
+    bb_stations = get_berlin_brandenburg_station_ids()["forecasts"]
     forecast_uris = gather_forecast_uris()
-    process_forecast(forecast_uris, unmapped(bb_stations))
+    process_forecast.map(forecast_uris, unmapped(bb_stations))
 
 
 with Flow("Fetch Full DWD Germany Observation Data") as observations_flow:
@@ -169,6 +170,7 @@ with Flow("Fetch Full DWD Germany Observation Data") as observations_flow:
 
 if __name__ == "__main__":
 
-    executor = DaskExecutor(local_processes=True)
+    # executor = DaskExecutor(local_processes=True)
+    executor = None
     forecasts_flow.run(executor=executor)
     # observations_flow.run(executor=executor)

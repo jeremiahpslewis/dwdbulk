@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import pandas as pd
+import pkg_resources
 import requests
 
 log = logging.getLogger(__name__)
@@ -106,9 +107,10 @@ def partitioned_df_write_to_parquet(df, data_folder="data/", use_date_partitions
     partition_cols = None
 
     if use_date_partitions:
-        partition_cols = ["date_start__year", "date_start__month"]
+        partition_cols = ["date_start__year", "date_start__month", "date_start__day"]
         df["date_start__year"] = df.date_start.dt.year
         df["date_start__month"] = df.date_start.dt.month
+        df["date_start__day"] = df.date_start.dt.day
 
     df["date_accessed"] = pd.Timestamp.today()
 
@@ -118,3 +120,9 @@ def partitioned_df_write_to_parquet(df, data_folder="data/", use_date_partitions
         index=False,
         allow_truncated_timestamps=True,
     )
+
+
+def get_observations_forecasts_lookup():
+    """Return station lookup."""
+    csv_file = pkg_resources.resource_filename("dwdbulk", "station_lookup.csv")
+    return pd.read_csv(csv_file)

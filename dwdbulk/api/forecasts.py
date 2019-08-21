@@ -74,6 +74,26 @@ def convert_xml_to_parquet(filepath, station_ids: List = None):
     # Get Station Forecasts
     forecast_items = root.findall("kml:Document/kml:Placemark", root.nsmap)
 
+    station_df = [
+        {
+            "coordinates": station_forecast.find(
+                "kml:Point/kml:coordinates", root.nsmap
+            ).text.split(","),
+            "station_id": station_forecast.find("kml:name", root.nsmap).text,
+            "station_name": station_forecast.find("kml:description", root.nsmap).text,
+        }
+        for station_forecast in forecast_items
+    ]
+    station_df = pd.DataFrame(station_df)
+    station_df["geo_lon"] = station_df["coordinates"].apply(lambda x: float(x[0]))
+    station_df["geo_lat"] = station_df["coordinates"].apply(lambda x: float(x[1]))
+    station_df["height"] = station_df["coordinates"].apply(lambda x: float(x[2]))
+    del station_df["coordinates"]
+
+    partitioned_df_write_to_parquet(
+        station_df, use_date_partitions=True, data_folder="data/forecast_stations"
+    )
+
     for station_forecast in forecast_items:
         station_id = station_forecast.find("kml:name", root.nsmap).text
 
@@ -102,3 +122,5 @@ def convert_xml_to_parquet(filepath, station_ids: List = None):
             df["station_id"] = station_id
             for k, v in metadata.items():
                 df[k] = v
+
+            partitioned_df_write_to_parquet(df)
