@@ -13,19 +13,18 @@ from prefect.engine.cache_validators import all_inputs
 from prefect.engine.executors import DaskExecutor
 from prefect.utilities.tasks import unmapped
 
-import dwdbulk.api as api
-from dwdbulk.api.forecasts import convert_xml_to_parquet
-from dwdbulk.util import get_resource_index, partitioned_df_write_to_parquet
+from .api import forecasts, observations
+from .util import get_resource_index, partitioned_df_write_to_parquet
 
 
 @task
 def fetch_resolutions():
-    return api.observations.get_resolutions()
+    return observations.get_resolutions()
 
 
 @task
 def fetch_measurement_parameters(resolution):
-    return api.observations.get_measurement_parameters(resolution)
+    return observations.get_measurement_parameters(resolution)
 
 
 @task(
@@ -44,7 +43,7 @@ def fetch_stations(res_param_obj):
     if not os.path.exists(full_folder_name):
         os.makedirs(full_folder_name)
 
-    stations_df = api.observations.get_stations(resolution, parameter)
+    stations_df = observations.get_stations(resolution, parameter)
     partitioned_df_write_to_parquet(stations_df, data_folder=full_folder_name)
 
     return stations_df["station_id"].tolist()
@@ -55,7 +54,7 @@ def fetch_measurement_data_locations(res_param_obj):
     resolution = res_param_obj["resolution"]
     parameter = res_param_obj["parameter"]
 
-    uris = api.observations.get_measurement_data_uris(resolution, parameter)
+    uris = observations.get_measurement_data_uris(resolution, parameter)
     return [
         {"uri": uri, "resolution": resolution, "parameter": parameter} for uri in uris
     ]
@@ -92,7 +91,7 @@ def fetch_measurement_data(measurement_spec):
         if os.path.exists(full_file_path):
             return
 
-        df = api.observations.get_measurement_data_from_uri(uri)
+        df = observations.get_measurement_data_from_uri(uri)
 
         partitioned_df_write_to_parquet(df, data_folder=full_folder_name)
 
@@ -119,7 +118,7 @@ def gather_forecast_uris():
 )
 def get_berlin_brandenburg_station_ids():
     """Identify active Berlin / Brandenburg weather stations."""
-    df = api.observations.get_stations("hourly", "air_temperature")
+    df = observations.get_stations("hourly", "air_temperature")
     df = df.loc[
         (df.state.isin(["Berlin", "Brandenburg"]))
         & (df.date_end > pd.Timestamp("2019-01-01", tz="UTC"))
@@ -135,8 +134,8 @@ def get_berlin_brandenburg_station_ids():
 )
 def process_forecast(forecast_url, station_ids):
     """Process XML forecast, store output and remove xml file."""
-    forecast_file_path = api.forecasts.fetch_raw_forecast_xml(forecast_url)
-    df = api.forecasts.convert_xml_to_parquet(forecast_file_path, station_ids)
+    forecast_file_path = forecasts.fetch_raw_forecast_xml(forecast_url)
+    df = forecasts.convert_xml_to_parquet(forecast_file_path, station_ids)
     os.remove(forecast_file_path)
 
 

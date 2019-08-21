@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from dwdbulk.util import partitioned_df_write_to_parquet
+from ..util import partitioned_df_write_to_parquet
 from lxml import etree
 
 

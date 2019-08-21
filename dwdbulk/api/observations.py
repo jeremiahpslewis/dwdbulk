@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 import dask.dataframe as dd
 import pandas as pd
 import requests
-from dwdbulk.util import (
+from ..util import (
     germany_climate_uri,
     get_resource_index,
     measurement_colnames_kv,
