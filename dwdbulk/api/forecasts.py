@@ -91,7 +91,7 @@ def convert_xml_to_parquet(filepath, station_ids: List = None):
     del station_df["coordinates"]
 
     partitioned_df_write_to_parquet(
-        station_df, use_date_partitions=True, data_folder="data/forecast_stations"
+        station_df, use_date_partitions=False, data_folder="data/forecast_stations"
     )
 
     for station_forecast in forecast_items:

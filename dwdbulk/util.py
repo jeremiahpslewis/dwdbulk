@@ -12,7 +12,7 @@ import requests
 log = logging.getLogger(__name__)
 
 # DWD CDC HTTP server.
-baseuri = "https://opendata.dwd.de/climate_environment/CDC/"
+baseurl = "https://opendata.dwd.de/climate_environment/CDC/"
 
 station_metadata = {
     "Stations_id": {"name": "station_id", "type": "str"},
@@ -52,7 +52,7 @@ measurement_datetypes_kv = [
 
 
 # Observations in Germany.
-germany_climate_uri = urljoin(baseuri, "observations_germany/climate/")
+germany_climate_url = urljoin(baseurl, "observations_germany/climate/")
 
 
 def setup_logging(level=logging.INFO):
@@ -60,7 +60,7 @@ def setup_logging(level=logging.INFO):
     logging.basicConfig(format=log_format, stream=sys.stderr, level=level)
 
 
-def parse_htmllist(baseurl, content, extension=None, full_uri=True):
+def parse_htmllist(baseurl, content, extension=None, full_url=True):
     class ListParser(HTMLParser):
         def __init__(self):
             HTMLParser.__init__(self)
@@ -80,25 +80,25 @@ def parse_htmllist(baseurl, content, extension=None, full_uri=True):
     if extension:
         paths = [path for path in paths if extension in path]
 
-    if full_uri:
+    if full_url:
         return [urljoin(baseurl + "/", path) for path in paths]
     else:
         return [path.rstrip("/") for path in paths]
 
 
-def get_resource_index(uri, extension="", full_uri=True):
+def get_resource_index(url, extension="", full_url=True):
     """
-    Extract link list from HTML, given a URI
+    Extract link list from HTML, given a url
 
-    :params str uri: Uri of a webpage with simple HTML link list
+    :params str url: url of a webpage with simple HTML link list
     :params str extension: String that should be matched in the link list; if "", all are returned
     """
 
-    log.info("Requesting %s", uri)
-    response = requests.get(uri)
+    log.info("Requesting %s", url)
+    response = requests.get(url)
     if response.status_code != 200:
-        raise ValueError(f"Fetching resource {uri} failed")
-    resource_list = parse_htmllist(uri, response.text, extension, full_uri)
+        raise ValueError(f"Fetching resource {url} failed")
+    resource_list = parse_htmllist(url, response.text, extension, full_url)
     return resource_list
 
 

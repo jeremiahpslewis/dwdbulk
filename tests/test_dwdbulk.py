@@ -8,15 +8,15 @@ import requests
 import pytest
 from dwdbulk.api.observations import (
     __gather_resource_files,
-    get_measurement_data_from_uri,
-    get_measurement_data_uris,
+    get_measurement_data_from_url,
+    get_measurement_data_urls,
     get_measurement_parameters,
     get_resolutions,
     get_stations,
-    get_stations_list_from_uri,
+    get_stations_list_from_url,
 )
 from dwdbulk.util import (
-    germany_climate_uri,
+    germany_climate_url,
     get_resource_index,
     parse_htmllist,
     station_metadata,
@@ -84,14 +84,14 @@ def test_parse_htmllist(resolution):
 
     expected_links = resolution_and_measurement_standards[resolution]
     expected_links = [
-        urljoin(germany_climate_uri, str(Path(resolution) / link))
+        urljoin(germany_climate_url, str(Path(resolution) / link))
         for link in expected_links
     ]
     assert sorted(extracted_links) == sorted(expected_links)
 
 
 def test_get_resource_index():
-    url = urljoin(germany_climate_uri, "10_minutes/")
+    url = urljoin(germany_climate_url, "10_minutes/")
     extracted_links = get_resource_index(url, "/")
 
     expected_links = resolution_and_measurement_standards["10_minutes"]
@@ -114,10 +114,10 @@ def test_get_resource_all():
     Test that all links are returned when extension is not specified.
     """
 
-    extracted_links = get_resource_index(germany_climate_uri)
+    extracted_links = get_resource_index(germany_climate_url)
 
     expected_links = [
-        urljoin(germany_climate_uri, link)
+        urljoin(germany_climate_url, link)
         for link in resolution_and_measurement_standards.keys()
     ]
     assert set(expected_links).issubset(extracted_links)
@@ -202,14 +202,14 @@ def test_get_stations(resolution, parameter):
     "resolution,parameter",
     [(k, v_i) for k, v in resolution_and_measurement_standards.items() for v_i in v],
 )
-def test_get_measurement_data_uris_and_data(resolution, parameter):
-    files = get_measurement_data_uris(resolution, parameter)
+def test_get_measurement_data_urls_and_data(resolution, parameter):
+    files = get_measurement_data_urls(resolution, parameter)
     assert len(files) > 0
 
     files_sample = random.sample(files, 2)
 
-    for uri in files_sample:
-        df = get_measurement_data_from_uri(uri)
+    for url in files_sample:
+        df = get_measurement_data_from_url(url)
         df.head()
 
     assert set(set(["station_id", "date_start"])).issubset(df.columns)

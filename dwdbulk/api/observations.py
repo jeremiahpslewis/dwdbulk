@@ -9,7 +9,7 @@ import dask.dataframe as dd
 import pandas as pd
 import requests
 from ..util import (
-    germany_climate_uri,
+    germany_climate_url,
     get_resource_index,
     measurement_colnames_kv,
     measurement_coltypes_kv,
@@ -32,9 +32,9 @@ def __gather_resource_files(resolution, parameter):
     Given time resolution and measurement parameter, return list of available resources (observations and metadata).
     """
 
-    index_uri = urljoin(germany_climate_uri, str(Path(resolution) / parameter))
+    index_url = urljoin(germany_climate_url, str(Path(resolution) / parameter))
 
-    resource_list = get_resource_index(index_uri)
+    resource_list = get_resource_index(index_url)
 
     # Extract station lists from all data buckets
     subfolder_resource_lists = [
@@ -60,14 +60,14 @@ def get_resolutions() -> List[str]:
     :returns: A list of resolution objects
     """
 
-    return get_resource_index(germany_climate_uri, "", full_uri=False)
+    return get_resource_index(germany_climate_url, "", full_url=False)
 
 
 def get_measurement_parameters(resolution: str) -> List[str]:
     return [
         {"resolution": resolution, "parameter": parameter}
         for parameter in get_resource_index(
-            urljoin(germany_climate_uri, resolution), "", full_uri=False
+            urljoin(germany_climate_url, resolution), "", full_url=False
         )
     ]
 
@@ -84,10 +84,10 @@ def get_stations(resolution: str, parameter: str) -> pd.DataFrame:
 
     resource_df_list = []
 
-    for resource_uri in resource_list:
-        log.info(f"Fetching resource {resource_uri}")
+    for resource_url in resource_list:
+        log.info(f"Fetching resource {resource_url}")
 
-        df = get_stations_list_from_uri(resource_uri)
+        df = get_stations_list_from_url(resource_url)
         resource_df_list.append(df)
 
     resource_df = pd.concat(resource_df_list, axis=0)
@@ -95,9 +95,9 @@ def get_stations(resolution: str, parameter: str) -> pd.DataFrame:
     return resource_df
 
 
-def get_measurement_data_from_uri(uri: str):
+def get_measurement_data_from_url(url: str):
     df = pd.read_csv(
-        uri,
+        url,
         sep=";",
         dtype=measurement_coltypes_kv,
         encoding="utf-8",
@@ -112,11 +112,11 @@ def get_measurement_data_from_uri(uri: str):
     return df
 
 
-def get_stations_list_from_uri(uri: str):
-    col_names = pd.read_csv(uri, sep=" ", encoding="latin1", nrows=0).columns.tolist()
+def get_stations_list_from_url(url: str):
+    col_names = pd.read_csv(url, sep=" ", encoding="latin1", nrows=0).columns.tolist()
 
     df = pd.read_fwf(
-        uri,
+        url,
         header=None,
         names=col_names,
         dtype=station_coltypes_kv,  # TODO: Figure out how to handle nullables...
@@ -131,7 +131,7 @@ def get_stations_list_from_uri(uri: str):
     return df
 
 
-def get_measurement_data_uris(resolution, parameter):
+def get_measurement_data_urls(resolution, parameter):
     available_resources = __gather_resource_files(resolution, parameter)
 
     # Filter by File Format

@@ -58,9 +58,9 @@ def fetch_measurement_data_locations(res_param_obj):
     resolution = res_param_obj["resolution"]
     parameter = res_param_obj["parameter"]
 
-    uris = observations.get_measurement_data_uris(resolution, parameter)
+    urls = observations.get_measurement_data_urls(resolution, parameter)
     return [
-        {"uri": uri, "resolution": resolution, "parameter": parameter} for uri in uris
+        {"url": url, "resolution": resolution, "parameter": parameter} for url in urls
     ]
 
 
@@ -78,7 +78,7 @@ def unlist(list_object):
 def fetch_measurement_data(measurement_spec):
     resolution = measurement_spec["resolution"]
     parameter = measurement_spec["parameter"]
-    uri = measurement_spec["uri"]
+    url = measurement_spec["url"]
 
     full_folder_name = f"data/{resolution}/{parameter}"
 
@@ -87,7 +87,7 @@ def fetch_measurement_data(measurement_spec):
 
     try:
         file_name = re.match(
-            r".*\/([^/]+_[a-z]+_[0-9]+_[^/]+).zip", uri, flags=re.IGNORECASE
+            r".*\/([^/]+_[a-z]+_[0-9]+_[^/]+).zip", url, flags=re.IGNORECASE
         )
         file_name = file_name.group(1)
         full_file_path = f"{full_folder_name}/{file_name}.parquet"
@@ -95,24 +95,24 @@ def fetch_measurement_data(measurement_spec):
         if os.path.exists(full_file_path):
             return
 
-        df = observations.get_measurement_data_from_uri(uri)
+        df = observations.get_measurement_data_from_url(url)
 
         partitioned_df_write_to_parquet(df, data_folder=full_folder_name)
 
     except:
         with open("errors.txt", "a") as f:
-            f.write(uri + "\n")
+            f.write(url + "\n")
         raise
 
 
 @task(max_retries=3, retry_delay=datetime.timedelta(minutes=10))
-def gather_forecast_uris():
+def gather_forecast_urls():
     """Identify all available forecast files."""
-    forecast_uris = get_resource_index(
+    forecast_urls = get_resource_index(
         "https://opendata.dwd.de/weather/local_forecasts/mos/MOSMIX_S/all_stations/kml/"
     )
-    forecast_uris = [f for f in forecast_uris if "LATEST" not in f]
-    return forecast_uris
+    forecast_urls = [f for f in forecast_urls if "LATEST" not in f]
+    return forecast_urls
 
 
 @task
@@ -142,8 +142,8 @@ def process_forecast(forecast_url, station_ids):
 
 with Flow("Fetch DWD Germany Forecast Data") as forecasts_flow:
     bb_stations = get_berlin_brandenburg_station_ids()["forecasts"]
-    forecast_uris = gather_forecast_uris()
-    process_forecast.map(forecast_uris, unmapped(bb_stations))
+    forecast_urls = gather_forecast_urls()
+    process_forecast.map(forecast_urls, unmapped(bb_stations))
 
 
 with Flow("Fetch Full DWD Germany Observation Data") as observations_flow:
@@ -162,11 +162,11 @@ with Flow("Fetch Full DWD Germany Observation Data") as observations_flow:
     # Fetch and save station data, return list of stations for each res / cat combination
     station_list = fetch_stations.map(res_param_list)
 
-    data_file_uris = fetch_measurement_data_locations.map(res_param_list)
-    data_file_uri_list = unlist(data_file_uris)
+    data_file_urls = fetch_measurement_data_locations.map(res_param_list)
+    data_file_url_list = unlist(data_file_urls)
 
     # Fetch data
-    fetch_measurement_data.map(data_file_uri_list)
+    fetch_measurement_data.map(data_file_url_list)
 
 if __name__ == "__main__":
 
