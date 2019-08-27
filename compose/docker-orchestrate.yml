@@ -6,4 +6,4 @@ services:
             - "./data:/app/data"
         ports:
             - 8888:8888
-        command: python -m dwdbulk.forecasts_flow & python -m dwdbulk.observations_flow
+        command: python -m dwdbulk.observations_flow # python -m dwdbulk.forecasts_flow &
