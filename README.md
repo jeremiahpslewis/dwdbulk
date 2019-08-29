@@ -23,6 +23,10 @@ Germany.
 
 `pip install git+https://github.com/jlewis91/dwdbulk.git`
 
+## Spin Up Container to Develop Library
+
+`docker-compose -f compose/docker-develop.yml --project-directory . up --build`
+
 ## Usage as library
 
 ```python

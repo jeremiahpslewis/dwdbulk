@@ -24,9 +24,8 @@ VERSION = "0.1.0"
 REQUIRED = [
     "requests>=2.22,<2.23",
     "pandas>=0.25,<0.26",
-    "prefect>=0.6,<0.7",
-    "pyarrow>=0.14.1,<0.15",
     "lxml>=4.4,<4.5",
+    "numpy>=1.17",
 ]
 
 # What packages are optional?
