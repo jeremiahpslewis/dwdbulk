@@ -4,11 +4,12 @@
 
 **dwdbulk** is a library that enables users to access open German weather data provided by the Deutsche Wetterdienst (DWD). It aspires to acheive the following objectives:
 
-- Comprehensive: Covers all relevant data made available by DWD.
-- Accessible: With minimal code and similar interfaces, users can access full longitudinal span for weather stations, both for forecasts and historical observations; similarly users can easily access cross-sectional data for a Germany-wide view.
-- Consistent: Data fields across different time frames and datasets are aligned (e.g. latitude and longitude always in decimal format).
-- Python 3.7+ & Pandas: Uses 'modern' Python. Does not aspire to have a CLI or other interfaces. Is not backed by a database. Yields data in DataFrame format.
-- Linux: Given prevalence of containers and the potential maintenance overhead of Mac & Windows, only Linux is targeted for support.
+- **Comprehensive:** Covers all relevant data made available by DWD.
+- **Accessible:** With minimal code and similar interfaces, users can access full longitudinal span for weather stations, both for forecasts and historical observations; similarly users can easily access cross-sectional data for a Germany-wide view.
+- **Consistent:** Data fields across different time frames and datasets are aligned (e.g. latitude and longitude always in decimal format).
+- **Python 3.7+ & Pandas:** Uses 'modern' Python. Does not aspire to have a CLI or other interfaces. Is not backed by a database. Yields data in DataFrame format.
+- **Lightweight:** Minimal dependencies.
+- **Linux:** Given prevalence of containers and the potential maintenance overhead of Mac & Windows, only Linux is targeted for support.
 
 ## Library
 
@@ -20,7 +21,7 @@ Germany.
 
 ## Installation
 
-`pip install dwdbulk`
+`pip install git+https://github.com/jlewis91/dwdbulk.git`
 
 ## Usage as library
 
