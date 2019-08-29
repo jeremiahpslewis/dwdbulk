@@ -1,4 +1,3 @@
-import logging
 import pathlib
 import re
 from pathlib import Path
@@ -18,9 +17,6 @@ from ..util import (
     station_coltypes_kv,
     station_datetypes_kv,
 )
-
-log = logging.getLogger(__name__)
-
 
 na_values = ["-999", "-999   "]
 # Hierarchical Structure
@@ -76,8 +72,6 @@ def get_stations(resolution: str, parameter: str) -> pd.DataFrame:
     """
     Load station meta data from DWD server.
     """
-    log.info("Loading station data from CDC")
-
     resource_list = __gather_resource_files(resolution, parameter)
     # Get directory contents.
     resource_list = [x for x in resource_list if "Beschreibung_Stationen.txt" in x]
@@ -85,8 +79,6 @@ def get_stations(resolution: str, parameter: str) -> pd.DataFrame:
     resource_df_list = []
 
     for resource_url in resource_list:
-        log.info(f"Fetching resource {resource_url}")
-
         df = get_stations_list_from_url(resource_url)
         resource_df_list.append(df)
 

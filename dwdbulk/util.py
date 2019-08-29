@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 import sys
 from html.parser import HTMLParser
@@ -10,7 +9,6 @@ import pandas as pd
 import pkg_resources
 import requests
 
-log = logging.getLogger(__name__)
 
 # DWD CDC HTTP server.
 baseurl = "https://opendata.dwd.de/climate_environment/CDC/"
@@ -56,11 +54,6 @@ measurement_datetypes_kv = [
 germany_climate_url = urljoin(baseurl, "observations_germany/climate/")
 
 
-def setup_logging(level=logging.INFO):
-    log_format = "%(asctime)-15s [%(name)-20s] %(levelname)-7s: %(message)s"
-    logging.basicConfig(format=log_format, stream=sys.stderr, level=level)
-
-
 def parse_htmllist(baseurl, content, extension=None, full_url=True):
     class ListParser(HTMLParser):
         def __init__(self):
@@ -95,7 +88,6 @@ def get_resource_index(url, extension="", full_url=True):
     :params str extension: String that should be matched in the link list; if "", all are returned
     """
 
-    log.info("Requesting %s", url)
     response = requests.get(url)
     if response.status_code != 200:
         raise ValueError(f"Fetching resource {url} failed")
