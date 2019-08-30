@@ -6,6 +6,7 @@ import pandas as pd
 import requests
 
 import pytest
+from dwdbulk.api import observations
 from dwdbulk.api.observations import (
     __gather_resource_files,
     get_measurement_data_from_url,
@@ -18,6 +19,7 @@ from dwdbulk.api.observations import (
 from dwdbulk.util import (
     germany_climate_url,
     get_resource_index,
+    get_stations_lookup,
     parse_htmllist,
     station_metadata,
 )
@@ -212,6 +214,66 @@ def test_get_measurement_data_urls_and_data(resolution, parameter):
         df = get_measurement_data_from_url(url)
         df.head()
 
-    assert set(set(["station_id", "date_start"])).issubset(df.columns)
+    assert set(["station_id", "date_start"]).issubset(df.columns)
     assert df.date_start.min() > pd.Timestamp("1700-01-01", tz="UTC")
     assert df.date_start.max() < pd.Timestamp("2200-01-01", tz="UTC")
+
+
+def test_observations_stations_available_in_lookup():
+    """Test all stations available in lookup are also available in observations data."""
+    # NOTE: Different stations available for different resolutions and parameters; need to adjust this...
+    resolution = "10_minutes"
+    parameter = "air_temperature"
+    df_stations = get_stations_lookup()
+    df_stations.observations_station_id
+    available_stations = (
+        get_stations(resolution, parameter)["station_id"].unique().tolist()
+    )
+    assert set(df_stations.observations_station_id.unique().tolist()).issubset(
+        set(available_stations)
+    )
+
+
+def test_observations_get_data_recent():
+    """Test that get_data returns reasonable results for all data, for a single station."""
+
+    resolution = "10_minutes"
+    parameter = "air_temperature"
+    df_stations = get_stations_lookup()
+    station_ids = df_stations.observations_station_id.head(1).tolist()
+    df = observations.get_data(
+        parameter,
+        station_ids=station_ids,
+        date_start=None,
+        date_end=None,
+        resolution=resolution,
+    )
+
+    date_end = pd.Timestamp.now(tz="UTC").floor("h") - pd.Timedelta("1.5h")
+
+    assert sorted(station_ids), sorted(df.station_id.unique().tolist())
+    assert df.duplicated(subset=["station_id", "date_start"]).sum() == 0
+    assert df.date_start.min() < pd.Timestamp("2000-01-01", tz="UTC")
+    assert df.date_start.max() >= date_end
+
+
+def test_observations_get_data_recent():
+    """Test that get_data returns reasonable results for recent data, for a subset of stations."""
+    resolution = "10_minutes"
+    parameter = "air_temperature"
+    date_end = pd.Timestamp.now(tz="UTC").floor("h")
+    date_start = date_end - pd.Timedelta("5 days")
+    df_stations = get_stations_lookup()
+    station_ids = df_stations.observations_station_id.sample(10).unique().tolist()
+    df = observations.get_data(
+        parameter,
+        station_ids=station_ids,
+        date_start=date_start,
+        date_end=date_end,
+        resolution=resolution,
+    )
+
+    assert sorted(station_ids), sorted(df.station_id.unique().tolist())
+    assert df.duplicated(subset=["station_id", "date_start"]).sum() == 0
+    assert df.date_start.min() == date_start
+    assert df.date_start.max() >= date_end - pd.Timedelta("20 minutes")

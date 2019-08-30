@@ -129,4 +129,4 @@ def partitioned_df_write_to_parquet(df, data_folder="data/", use_date_partitions
 def get_stations_lookup():
     """Return station lookup."""
     csv_file = pkg_resources.resource_filename("dwdbulk", "station_lookup.csv")
-    return pd.read_csv(csv_file)
+    return pd.read_csv(csv_file, dtype=str)
