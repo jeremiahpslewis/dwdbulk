@@ -178,7 +178,7 @@ def get_data(
                 parameter == x["parameter"]
                 for x in get_measurement_parameters(resolution)
             ]
-        ), f"Measurement parameter `{measurement_parameter}` not supported for chosen resolution."
+        ), f"Measurement parameter `{parameter}` not supported for chosen resolution."
 
         if station_ids:
             assert isinstance(station_ids, list), "station_ids must be None or a list"

@@ -1,5 +1,6 @@
 - Enable limiting forecast data to specific parameters!
 - Add tests to forecast import
+- Unique station ids prefixed with domain, e.g. CDC:00005
 
 - Setup ongoing data collection via Azure pipelines (hourly?)
 
@@ -10,7 +11,6 @@
 - Move to cloud (Azure?)
 - https://pypi.org/project/azure-storage-blob/
 - Process data files -> parquet with partitioning
-    - Add to prefect flow
 - Put together exploratory visualizations
     - Blog post about sleeping weather
     - Blog post about heat & duration
