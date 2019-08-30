@@ -11,7 +11,7 @@ import requests
 
 
 # DWD CDC HTTP server.
-baseurl = "https://opendata.dwd.de/climate_environment/CDC/"
+baseurl = "https://opendata.dwd.de/"
 
 station_metadata = {
     "Stations_id": {"name": "station_id", "type": "str"},
@@ -51,7 +51,12 @@ measurement_datetypes_kv = [
 
 
 # Observations in Germany.
-germany_climate_url = urljoin(baseurl, "observations_germany/climate/")
+germany_climate_url = urljoin(
+    baseurl, "climate_environment/CDC/observations_germany/climate/"
+)
+mosmix_s_forecast_url = urljoin(
+    baseurl, "weather/local_forecasts/mos/MOSMIX_S/all_stations/kml/"
+)
 
 
 def parse_htmllist(baseurl, content, extension=None, full_url=True):
@@ -93,37 +98,6 @@ def get_resource_index(url, extension="", full_url=True):
         raise ValueError(f"Fetching resource {url} failed")
     resource_list = parse_htmllist(url, response.text, extension, full_url)
     return resource_list
-
-
-def partitioned_df_write_to_parquet(df, data_folder="data/", use_date_partitions=True):
-    """Write dataframe to parquet."""
-    if not os.path.exists(data_folder):
-        os.makedirs(data_folder)
-
-    partition_cols = ["date_accessed__yyyymmdd"]
-
-    if use_date_partitions:
-        partition_cols = [
-            *partition_cols,
-            "date_start__year",
-            "date_start__month",
-            "date_start__day",
-        ]
-        df["date_start__year"] = df.date_start.dt.year
-        df["date_start__month"] = df.date_start.dt.month
-        df["date_start__day"] = df.date_start.dt.day
-
-    today_date = pd.Timestamp.today()
-    df["date_accessed"] = today_date
-    df["date_accessed__yyyymmdd"] = today_date.strftime("%Y-%m-%d")
-
-    df.to_parquet(
-        data_folder,
-        partition_cols=partition_cols,
-        index=False,
-        allow_truncated_timestamps=True,
-        version="2.0",
-    )
 
 
 def get_stations_lookup():

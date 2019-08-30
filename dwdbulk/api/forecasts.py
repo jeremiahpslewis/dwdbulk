@@ -10,33 +10,33 @@ import numpy as np
 import pandas as pd
 import requests
 
-from ..util import partitioned_df_write_to_parquet
 from lxml import etree
 
 
-def fetch_raw_forecast_xml(url, xml_directory_path="forecast_xml"):
+def fetch_raw_forecast_xml(url, directory_path):
     """
     Fetch weather forecast file (zipped xml) and extract xml into folder specified by xml_directory_path.
     """
-    if not os.path.exists(xml_directory_path):
-        os.makedirs(xml_directory_path)
+    directory_path = Path(directory_path)
+
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
 
     r = requests.get(url, stream=True)
     file_name = urlparse(url).path.replace("/", "__")
 
     if r.status_code == 200:
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            with open(tmpdirname + "/" + file_name, "wb") as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
+        with open(directory_path / file_name, "wb") as f:
+            r.raw.decode_content = True
+            shutil.copyfileobj(r.raw, f)
 
-            with ZipFile(tmpdirname + "/" + file_name, "r") as zipObj:
-                # Extract all the contents of zip file in current directory
-                zipObj.extractall(path=xml_directory_path)
-                return Path(xml_directory_path) / zipObj.namelist()[0]
+        with ZipFile(directory_path / file_name, "r") as zipObj:
+            # Extract all the contents of zip file in current directory
+            zipObj.extractall(path=directory_path)
+            return directory_path / zipObj.namelist()[0]
 
 
-def convert_xml_to_parquet(filepath, station_ids: List = None):
+def convert_xml_to_pandas(filepath, station_ids: List = None):
     """
     Convert DWD XML Weather Forecast File of Type MOSMIX_S to parquet files.
     """
@@ -90,10 +90,6 @@ def convert_xml_to_parquet(filepath, station_ids: List = None):
     station_df["height"] = station_df["coordinates"].apply(lambda x: float(x[2]))
     del station_df["coordinates"]
 
-    partitioned_df_write_to_parquet(
-        station_df, use_date_partitions=False, data_folder="data/forecast_stations"
-    )
-
     for station_forecast in forecast_items:
         station_id = station_forecast.find("kml:name", root.nsmap).text
 
@@ -122,5 +118,3 @@ def convert_xml_to_parquet(filepath, station_ids: List = None):
             df["station_id"] = station_id
             for k, v in metadata.items():
                 df[k] = v
-
-            partitioned_df_write_to_parquet(df, data_folder="data/forecasts")
