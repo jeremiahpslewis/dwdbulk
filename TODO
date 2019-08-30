@@ -1,7 +1,7 @@
 - Enable limiting forecast data to specific parameters!
 - Add tests to forecast import
 - Unique station ids prefixed with domain, e.g. CDC:00005
-
+- Correspondence table between observation and forecast measurement parameters; convert to consistent units
 - Setup ongoing data collection via Azure pipelines (hourly?)
 
 - Start on blogpost about library

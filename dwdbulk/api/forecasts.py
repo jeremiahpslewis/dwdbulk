@@ -12,6 +12,8 @@ import requests
 
 from lxml import etree
 
+from ..util import get_resource_index, mosmix_s_forecast_url
+
 
 def fetch_raw_forecast_xml(url, directory_path):
     """
@@ -139,3 +141,41 @@ def convert_xml_to_pandas(
         return df, station_df
     else:
         return df
+
+
+def get_data(station_ids=None, parameters=None):
+    """Fetch weather forecast data (KML/MOSMIX_S dataset).
+    Parameters
+    ----------
+    station_ids : List
+        If not None, station_ids are a list of station ids for which data is desired. If None, data for all stations is returned.
+
+    parameters: List
+        If not None, list of parameters, per MOSMIX definition, here: https://www.dwd.de/DE/leistungen/opendata/help/schluessel_datenformate/kml/mosmix_elemente_pdf.pdf?__blob=publicationFile&v=2
+    run_checks :
+        Checks that all aspects of the data request are valid.
+
+    """
+    if station_ids:
+        assert isinstance(station_ids, list), "station_ids must be None or a list"
+        station_ids = [str(station_id) for station_id in station_ids]
+
+    if parameters:
+        assert isinstance(parameters, list), "parameters must be None or a list"
+        parameters = [str(parameters) for param in parameters]
+
+    urls = get_resource_index(mosmix_s_forecast_url)
+
+    df_list = []
+    for url in urls:
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            kml_path = fetch_raw_forecast_xml(url, tmp_dir_name)
+            df = convert_xml_to_pandas(
+                kml_path, station_ids, parameters, return_station_data=False
+            )
+
+        df_list.append(df)
+
+    df = pd.concat(df_list, axis=0)
+
+    return df
