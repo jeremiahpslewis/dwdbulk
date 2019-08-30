@@ -36,7 +36,12 @@ def fetch_raw_forecast_xml(url, directory_path):
             return directory_path / zipObj.namelist()[0]
 
 
-def convert_xml_to_pandas(filepath, station_ids: List = None):
+def convert_xml_to_pandas(
+    filepath,
+    station_ids: List = None,
+    parameters: List = None,
+    return_station_data=False,
+):
     """
     Convert DWD XML Weather Forecast File of Type MOSMIX_S to parquet files.
     """
@@ -63,6 +68,7 @@ def convert_xml_to_pandas(filepath, station_ids: List = None):
         k: prod_definition.find(f"{{{root.nsmap['dwd']}}}{v}").text
         for k, v in prod_items.items()
     }
+    metadata["date_issued"] = pd.Timestamp(metadata["date_issued"])
 
     # Get Time Steps
     timesteps = root.findall(
@@ -71,24 +77,10 @@ def convert_xml_to_pandas(filepath, station_ids: List = None):
     )[0]
     timesteps = [pd.Timestamp(i.text) for i in timesteps.getchildren()]
 
-    # Get Station Forecasts
+    # Get Per Station Forecasts
     forecast_items = root.findall("kml:Document/kml:Placemark", root.nsmap)
 
-    station_df = [
-        {
-            "coordinates": station_forecast.find(
-                "kml:Point/kml:coordinates", root.nsmap
-            ).text.split(","),
-            "station_id": station_forecast.find("kml:name", root.nsmap).text,
-            "station_name": station_forecast.find("kml:description", root.nsmap).text,
-        }
-        for station_forecast in forecast_items
-    ]
-    station_df = pd.DataFrame(station_df)
-    station_df["geo_lon"] = station_df["coordinates"].apply(lambda x: float(x[0]))
-    station_df["geo_lat"] = station_df["coordinates"].apply(lambda x: float(x[1]))
-    station_df["height"] = station_df["coordinates"].apply(lambda x: float(x[2]))
-    del station_df["coordinates"]
+    df_list = []
 
     for station_forecast in forecast_items:
         station_id = station_forecast.find("kml:name", root.nsmap).text
@@ -105,16 +97,45 @@ def convert_xml_to_pandas(filepath, station_ids: List = None):
                     f"{{{root.nsmap['dwd']}}}elementName"
                 )
                 measurement_string = measurement_item.getchildren()[0].text
-                measurement_values = " ".join(measurement_string.split()).split(" ")
-                measurement_values = [
-                    np.nan if i == "-" else float(i) for i in measurement_values
-                ]
 
-                assert len(measurement_values) == len(
-                    timesteps
-                ), "Number of timesteps does not match number of measurement values."
-                df[measurement_parameter] = measurement_values
+                if parameters is None or measurement_parameter in parameters:
+                    measurement_values = " ".join(measurement_string.split()).split(" ")
+                    measurement_values = [
+                        np.nan if i == "-" else float(i) for i in measurement_values
+                    ]
+
+                    assert len(measurement_values) == len(
+                        timesteps
+                    ), "Number of timesteps does not match number of measurement values."
+                    df[measurement_parameter] = measurement_values
 
             df["station_id"] = station_id
             for k, v in metadata.items():
                 df[k] = v
+
+            df_list.append(df)
+
+    df = pd.concat(df_list, axis=0)
+
+    if return_station_data:
+        station_df = [
+            {
+                "coordinates": station_forecast.find(
+                    "kml:Point/kml:coordinates", root.nsmap
+                ).text.split(","),
+                "station_id": station_forecast.find("kml:name", root.nsmap).text,
+                "station_name": station_forecast.find(
+                    "kml:description", root.nsmap
+                ).text,
+            }
+            for station_forecast in forecast_items
+        ]
+        station_df = pd.DataFrame(station_df)
+        station_df["geo_lon"] = station_df["coordinates"].apply(lambda x: float(x[0]))
+        station_df["geo_lat"] = station_df["coordinates"].apply(lambda x: float(x[1]))
+        station_df["height"] = station_df["coordinates"].apply(lambda x: float(x[2]))
+        del station_df["coordinates"]
+
+        return df, station_df
+    else:
+        return df
