@@ -98,9 +98,11 @@ def convert_xml_to_pandas(
                 measurement_parameter = measurement_item.get(
                     f"{{{root.nsmap['dwd']}}}elementName"
                 )
-                measurement_string = measurement_item.getchildren()[0].text
 
                 if parameters is None or measurement_parameter in parameters:
+
+                    measurement_string = measurement_item.getchildren()[0].text
+
                     measurement_values = " ".join(measurement_string.split()).split(" ")
                     measurement_values = [
                         np.nan if i == "-" else float(i) for i in measurement_values
@@ -162,7 +164,7 @@ def get_data(station_ids=None, parameters=None):
 
     if parameters:
         assert isinstance(parameters, list), "parameters must be None or a list"
-        parameters = [str(parameters) for param in parameters]
+        parameters = [str(param) for param in parameters]
 
     urls = get_resource_index(mosmix_s_forecast_url)
 
