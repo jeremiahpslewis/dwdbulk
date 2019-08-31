@@ -234,7 +234,7 @@ def test_observations_stations_available_in_lookup():
     )
 
 
-def test_observations_get_data_recent():
+def test_observations_get_data_all():
     """Test that get_data returns reasonable results for all data, for a single station."""
 
     resolution = "10_minutes"
@@ -276,4 +276,4 @@ def test_observations_get_data_recent():
     assert sorted(station_ids), sorted(df.station_id.unique().tolist())
     assert df.duplicated(subset=["station_id", "date_start"]).sum() == 0
     assert df.date_start.min() == date_start
-    assert df.date_start.max() >= date_end - pd.Timedelta("20 minutes")
+    assert df.date_start.max() >= date_end - pd.Timedelta("120 minutes")
