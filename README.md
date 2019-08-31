@@ -29,13 +29,7 @@ Germany.
 
 ## Usage as library
 
-```python
-
-...
-...
-
-```
-
+See notebooks here: [examples/]()
 ## Licenses
 
 
@@ -55,5 +49,5 @@ The DWD has information about their re-use policy in
 Thanks to [Andreas Motl](https://github.com/amotl), [Marian Steinbach](https://github.com/marians), [Philipp Klaus](https://github.com/pklaus) and all people from [DWD](https://www.dwd.de/). This project is based on [dwdbulk2](https://github.com/hiveeyes/dwdbulk2).
 
 ## Changelog
-=========
+
 See file [CHANGES.md]().
