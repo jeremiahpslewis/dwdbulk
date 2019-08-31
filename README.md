@@ -35,7 +35,7 @@ See notebooks here: [examples/](examples/)
 
 ### Code license
 
-Licensed under the MIT license. See file ``LICENSE`` for details.
+Licensed under the MIT license. See file [LICENSE](LICENSE) for details.
 
 ### Data license
 
