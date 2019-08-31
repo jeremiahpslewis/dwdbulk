@@ -29,7 +29,7 @@ Germany.
 
 ## Usage as library
 
-See notebooks here: [examples/]()
+See notebooks here: [examples/](examples/)
 ## Licenses
 
 
@@ -50,4 +50,4 @@ Thanks to [Andreas Motl](https://github.com/amotl), [Marian Steinbach](https://g
 
 ## Changelog
 
-See file [CHANGES.md]().
+See file [CHANGES.md](CHANGES.md).
