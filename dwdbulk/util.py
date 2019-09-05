@@ -118,7 +118,7 @@ def y2k_date_parser(col, date_format="%Y%m%d%H%M"):
 
     col_raw[pre_y2k_bool] = (
         col_raw[pre_y2k_bool]
-        .dt.tz_localize(tz="CET", ambiguous="NaT")
+        .dt.tz_localize(tz="CET", ambiguous="infer", nonexistent="NaT")
         .dt.tz_convert("UTC")
     )
     col_raw[~pre_y2k_bool] = col_raw[~pre_y2k_bool].dt.tz_localize(tz="UTC")
