@@ -22,6 +22,7 @@ from dwdbulk.util import (
     get_stations_lookup,
     parse_htmllist,
     station_metadata,
+    y2k_date_parser,
 )
 
 measurement_parameters_10_minutes = [
@@ -277,3 +278,17 @@ def test_observations_get_data_recent():
     assert df.duplicated(subset=["station_id", "date_start"]).sum() == 0
     assert df.date_start.min() == date_start
     assert df.date_start.max() >= date_end - pd.Timedelta("120 minutes")
+
+
+def test_y2k_datetime_parser_for_pre_2000_dates():
+    date_test = y2k_date_parser(["201801010130", "199901010230", "199906010330"])
+
+    date_expect = (
+        pd.to_datetime(
+            ["2018-01-01 01:30", "1999-01-01 01:30", "1999-06-01 01:30"], utc=True
+        )
+        .to_series(keep_tz=True)
+        .reset_index(drop=True)
+    )
+
+    pd.testing.assert_series_equal(date_test, date_expect)

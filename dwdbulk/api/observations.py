@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 
 import pandas as pd
 import requests
+
 from ..util import (
     germany_climate_url,
     get_resource_index,
@@ -15,6 +16,7 @@ from ..util import (
     station_colnames_kv,
     station_coltypes_kv,
     station_datetypes_kv,
+    y2k_date_parser,
 )
 
 na_values = ["-999", "-999   "]
@@ -94,7 +96,7 @@ def get_measurement_data_from_url(url: str):
         encoding="utf-8",
         parse_dates=measurement_datetypes_kv,
         skipinitialspace=True,
-        date_parser=lambda col: pd.to_datetime(col, format="%Y%m%d%H%M", utc=True),
+        date_parser=lambda col: y2k_date_parser(col, date_format="%Y%m%d%H%M"),
         na_values=na_values,
     )
     df.drop(columns="eor", inplace=True, errors="ignore")
@@ -117,7 +119,7 @@ def get_stations_list_from_url(url: str):
         encoding="latin1",
         skiprows=2,
         parse_dates=station_datetypes_kv,
-        date_parser=lambda col: pd.to_datetime(col, format="%Y%m%d", utc=True),
+        date_parser=lambda col: y2k_date_parser(col, date_format="%Y%m%d"),
         na_values=na_values,
     )
 

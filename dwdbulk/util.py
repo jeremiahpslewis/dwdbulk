@@ -104,3 +104,19 @@ def get_stations_lookup():
     """Return station lookup."""
     csv_file = pkg_resources.resource_filename("dwdbulk", "station_lookup.csv")
     return pd.read_csv(csv_file, dtype=str)
+
+
+def y2k_date_parser(col, date_format="%Y%m%d%H%M"):
+    """Parse dates according to typical DWD spec: CET up to 2000, UTC thereafter."""
+
+    y2k = pd.to_datetime("2000-01-01", utc=True)
+
+    col_raw = pd.to_datetime(col, format=date_format)
+    col_utc = col_raw.tz_localize(tz="UTC", ambiguous="NaT")
+    col_cet_in_utc = col_raw.tz_localize(tz="CET", ambiguous="NaT").tz_convert("UTC")
+
+    col_utc = col_utc.to_series(keep_tz=True).reset_index(drop=True)
+    col_cet_in_utc = col_cet_in_utc.to_series(keep_tz=True).reset_index(drop=True)
+    col_utc[col_utc < y2k] = col_cet_in_utc[col_utc < y2k]
+
+    return col_utc
