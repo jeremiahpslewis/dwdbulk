@@ -281,11 +281,19 @@ def test_observations_get_data_recent():
 
 
 def test_y2k_datetime_parser_for_pre_2000_dates():
-    date_test = y2k_date_parser(["201801010130", "199901010230", "199906010330"])
+    date_test = y2k_date_parser(
+        ["201801010130", "199901010230", "199906010330", "200603260200"]
+    )
 
     date_expect = (
         pd.to_datetime(
-            ["2018-01-01 01:30", "1999-01-01 01:30", "1999-06-01 01:30"], utc=True
+            [
+                "2018-01-01 01:30",
+                "1999-01-01 01:30",
+                "1999-06-01 01:30",
+                "2006-03-26 02:00",
+            ],
+            utc=True,
         )
         .to_series(keep_tz=True)
         .reset_index(drop=True)

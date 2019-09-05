@@ -109,14 +109,18 @@ def get_stations_lookup():
 def y2k_date_parser(col, date_format="%Y%m%d%H%M"):
     """Parse dates according to typical DWD spec: CET up to 2000, UTC thereafter."""
 
-    y2k = pd.to_datetime("2000-01-01", utc=True)
+    y2k = pd.Timestamp("2000-01-01")
 
     col_raw = pd.to_datetime(col, format=date_format)
-    col_utc = col_raw.tz_localize(tz="UTC", ambiguous="NaT")
-    col_cet_in_utc = col_raw.tz_localize(tz="CET", ambiguous="NaT").tz_convert("UTC")
+    col_raw = col_raw.to_series(keep_tz=True).reset_index(drop=True)
 
-    col_utc = col_utc.to_series(keep_tz=True).reset_index(drop=True)
-    col_cet_in_utc = col_cet_in_utc.to_series(keep_tz=True).reset_index(drop=True)
-    col_utc[col_utc < y2k] = col_cet_in_utc[col_utc < y2k]
+    pre_y2k_bool = col_raw < y2k
 
-    return col_utc
+    col_raw[pre_y2k_bool] = (
+        col_raw[pre_y2k_bool]
+        .dt.tz_localize(tz="CET", ambiguous="NaT")
+        .dt.tz_convert("UTC")
+    )
+    col_raw[~pre_y2k_bool] = col_raw[~pre_y2k_bool].dt.tz_localize(tz="UTC")
+
+    return pd.to_datetime(col_raw, utc=True)
