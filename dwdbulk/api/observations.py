@@ -1,11 +1,8 @@
-import pathlib
-import re
 from pathlib import Path
 from typing import List
 from urllib.parse import urljoin
 
 import pandas as pd
-import requests
 
 from ..util import (
     germany_climate_url,

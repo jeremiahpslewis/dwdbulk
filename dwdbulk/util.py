@@ -1,9 +1,5 @@
-import argparse
-import os
-import sys
 from html.parser import HTMLParser
-from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 import pandas as pd
 import pkg_resources

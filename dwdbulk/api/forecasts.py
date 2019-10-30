@@ -61,11 +61,7 @@ def convert_xml_to_pandas(
     prod_definition = root.findall(
         "kml:Document/kml:ExtendedData/dwd:ProductDefinition", root.nsmap
     )[0]
-    prod_items = {
-        "product_id": "ProductID",
-        "generating_process": "GeneratingProcess",
-        "date_issued": "IssueTime",
-    }
+
     metadata = {
         k: prod_definition.find(f"{{{root.nsmap['dwd']}}}{v}").text
         for k, v in prod_items.items()
