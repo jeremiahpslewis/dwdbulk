@@ -1,0 +1,16 @@
+kind: Module
+description: The container for testing dwdbulk.
+type: container
+name: api
+services:
+  - name: api
+    args: [python, -m, http.server, --bind, "0.0.0.0", "8080"]
+    ingresses:
+      - path: /
+        port: http
+    ports:
+      - name: http
+        containerPort: 8080
+        servicePort: 8080
+# tests:
+#   - name: unit
