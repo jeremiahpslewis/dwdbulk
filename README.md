@@ -15,8 +15,8 @@
 
 [![Build Status](https://dev.azure.com/jlewis91/dwdbulk/_apis/build/status/jlewis91.dwdbulk?branchName=master)](https://dev.azure.com/jlewis91/dwdbulk/_build/latest?definitionId=1&branchName=master)
 
-Python client to access weather data from Deutscher Wetterdienst
-(`DWD <https://www.dwd.de/>`__), the federal meteorological service in
+Python client to access weather data from [Deutscher Wetterdienst
+(`DWD`)](https://www.dwd.de/), the federal meteorological service in
 Germany.
 
 ## Installation
